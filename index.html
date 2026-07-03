@@ -388,7 +388,12 @@ const IMG_MAPS = {
   'fco-img': {
     label:'🛰 Fiumicino — planimetria reale (esempio)',
     name:'Fiumicino — planimetria (immagine)',
-    file:'maps/fiumicino-esempio.png', w:1720, h:1000, meters:516
+    file:'maps/fiumicino-esempio.png', w:1720, h:1000, meters:516,
+    // grafo dei camminamenti associato alla planimetria: il percorso segue
+    // le "strade" in automatico (qui riusa quello della mappa schematica FCO,
+    // che ha le stesse coordinate). Per una planimetria reale si disegna una
+    // volta sola in back office e vale per tutti i percorsi.
+    graphFrom:'fco'
   }
 };
 
@@ -396,10 +401,12 @@ function imgMapDef(id, data){
   const m = IMG_MAPS[id];
   if(!m) return null;
   const meters = (data && data.mw) ? data.mw : m.meters;
+  const g = m.graphFrom ? MAPS[m.graphFrom] : null;
   return { id, name:m.name, w:m.w, h:m.h, mPerPx: meters / m.w,
     svg:`<rect x="-300" y="-300" width="${m.w+600}" height="${m.h+600}" fill="#c3d0de"/>`+
         `<image href="${m.file}" x="0" y="0" width="${m.w}" height="${m.h}"/>`,
-    nodes:[], edges:[], adj:[], entry:{x:Math.round(m.w/2), y:m.h-40}, isImage:true };
+    nodes: g ? g.nodes : [], edges: g ? g.edges : [], adj: g ? g.adj : [],
+    entry:{x:Math.round(m.w/2), y:m.h-40}, isImage:true };
 }
 
 function getMap(id, data){
@@ -724,7 +731,7 @@ function renderAdmin(){
         <p class="hint">⚠️ La planimetria caricata qui resta sul <b>tuo</b> browser: serve solo per <b>test locale</b>, il link non è condivisibile. Per un link che funziona su qualunque dispositivo usa una <b>planimetria reale</b> dall'elenco (o inviami l'immagine da integrare).</p>
       </div>
       <div id="imgBox" style="display:none">
-        <p class="hint">🛰 <b>Planimetria reale.</b> Il percorso qui si traccia a mano con i <b>waypoint</b> (clicca «➕ Waypoint» e segui i corridoi). Il link generato è <b>condivisibile</b>: chi lo apre scarica l'immagine dal sito.</p>
+        <p class="hint">🛰 <b>Planimetria reale.</b> Se la mappa ha la <b>rete dei camminamenti</b> associata, il percorso segue le strade <b>in automatico</b> (basta mettere i pin Auto e Cliente). Altrimenti si traccia a mano con i <b>waypoint</b>. Il link generato è <b>condivisibile</b> su qualunque dispositivo.</p>
       </div>
 
       <h2>2 · Dati veicolo</h2>
