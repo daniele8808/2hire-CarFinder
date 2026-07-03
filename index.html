@@ -378,7 +378,32 @@ const MAPS = {
   })
 };
 
+/* ============ PLANIMETRIE-IMMAGINE (file reali ospitati sul sito) =======
+   Ogni voce punta a un file immagine committato nel repo (cartella maps/):
+   viaggia nel link solo l'id, il browser del cliente scarica l'immagine
+   dal sito → il link è CONDIVISIBILE su qualunque dispositivo.
+   Per aggiungere una planimetria reale: metti il file in maps/, poi aggiungi
+   qui una riga con dimensioni in px (w,h) e la larghezza reale in metri. */
+const IMG_MAPS = {
+  'fco-img': {
+    label:'🛰 Fiumicino — planimetria reale (esempio)',
+    name:'Fiumicino — planimetria (immagine)',
+    file:'maps/fiumicino-esempio.png', w:1720, h:1000, meters:516
+  }
+};
+
+function imgMapDef(id, data){
+  const m = IMG_MAPS[id];
+  if(!m) return null;
+  const meters = (data && data.mw) ? data.mw : m.meters;
+  return { id, name:m.name, w:m.w, h:m.h, mPerPx: meters / m.w,
+    svg:`<rect x="-300" y="-300" width="${m.w+600}" height="${m.h+600}" fill="#c3d0de"/>`+
+        `<image href="${m.file}" x="0" y="0" width="${m.w}" height="${m.h}"/>`,
+    nodes:[], edges:[], adj:[], entry:{x:Math.round(m.w/2), y:m.h-40}, isImage:true };
+}
+
 function getMap(id, data){
+  if(IMG_MAPS[id]) return imgMapDef(id, data);
   if(id === 'custom'){
     let src = null, w = 1000, h = 700, mw = 150;
     try{ const c = JSON.parse(localStorage.getItem('th_custom') || 'null'); if(c){ src = c.src; w = c.w; h = c.h; } }catch(e){}
@@ -386,7 +411,7 @@ function getMap(id, data){
     if(!src) return null;
     return { id:'custom', name:'Planimetria personalizzata', w, h, mPerPx: mw / w,
              svg:`<rect x="-200" y="-200" width="${w+400}" height="${h+400}" fill="#cbd5e1"/><image href="${src}" x="0" y="0" width="${w}" height="${h}"/>`,
-             nodes:[], edges:[], adj:[], entry:{x:w/2, y:h-40} };
+             nodes:[], edges:[], adj:[], entry:{x:w/2, y:h-40}, isImage:true };
   }
   return MAPS[id] || null;
 }
@@ -666,6 +691,8 @@ function findURL(){
 function renderAdmin(){
   adLoad();
   const app = $('#app');
+  const imgOpts = Object.entries(IMG_MAPS)
+    .map(([id,m]) => `<option value="${id}">${esc(m.label || m.name)}</option>`).join('');
   app.innerHTML = `
   <div class="admin">
     <aside class="sidebar">
@@ -679,9 +706,14 @@ function renderAdmin(){
       <h2>1 · Planimetria</h2>
       <div class="field">
         <select id="mapSel">
-          <option value="fco">✈️ Fiumicino — Terminal 3 + Multipiano E</option>
-          <option value="cia">✈️ Ciampino — Terminal + Parcheggio P1</option>
-          <option value="custom">🖼 Planimetria personalizzata (upload)</option>
+          <optgroup label="Schematiche · percorso automatico">
+            <option value="fco">✈️ Fiumicino — Terminal 3 + Multipiano E</option>
+            <option value="cia">✈️ Ciampino — Terminal + Parcheggio P1</option>
+          </optgroup>
+          <optgroup label="Planimetrie reali · link condivisibile">
+            ${imgOpts}
+          </optgroup>
+          <option value="custom">🖼 Carica planimetria (solo test locale)</option>
         </select>
       </div>
       <div id="customBox" style="display:none">
@@ -689,7 +721,10 @@ function renderAdmin(){
           <input type="file" id="mapFile" accept="image/*"></div>
         <div class="field"><label>Larghezza reale dell'area (metri) — per calcolare le distanze</label>
           <input type="number" id="mapMeters" min="10" max="2000" value="${AD.mw}"></div>
-        <p class="hint">⚠️ In questa demo la planimetria caricata resta sul <b>tuo</b> browser: il link cliente con mappa personalizzata funziona solo aperto da questo stesso dispositivo. Con le mappe integrate il link funziona ovunque.</p>
+        <p class="hint">⚠️ La planimetria caricata qui resta sul <b>tuo</b> browser: serve solo per <b>test locale</b>, il link non è condivisibile. Per un link che funziona su qualunque dispositivo usa una <b>planimetria reale</b> dall'elenco (o inviami l'immagine da integrare).</p>
+      </div>
+      <div id="imgBox" style="display:none">
+        <p class="hint">🛰 <b>Planimetria reale.</b> Il percorso qui si traccia a mano con i <b>waypoint</b> (clicca «➕ Waypoint» e segui i corridoi). Il link generato è <b>condivisibile</b>: chi lo apre scarica l'immagine dal sito.</p>
       </div>
 
       <h2>2 · Dati veicolo</h2>
@@ -729,6 +764,7 @@ function renderAdmin(){
 
   $('#mapSel').value = AD.mapId;
   $('#customBox').style.display = AD.mapId === 'custom' ? 'block' : 'none';
+  $('#imgBox').style.display = IMG_MAPS[AD.mapId] ? 'block' : 'none';
 
   const svg = $('#adminSvg');
   let pz = null;
@@ -792,6 +828,7 @@ function renderAdmin(){
   $('#mapSel').addEventListener('change', e => {
     AD.mapId = e.target.value; AD.u = AD.c = null; AD.w = []; pz = null;
     $('#customBox').style.display = AD.mapId === 'custom' ? 'block' : 'none';
+    $('#imgBox').style.display = IMG_MAPS[AD.mapId] ? 'block' : 'none';
     adSave(); refresh();
   });
   const mf = $('#mapFile');
