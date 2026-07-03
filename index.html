@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>To Hire · CarFinder — Demo</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
+    --bg:#f1f5f9; --card:#ffffff; --line:#e2e8f0;
+    --accent:#ea580c; --accent2:#c2410c;
+    --blue:#2563eb; --green:#059669; --red:#e11d48;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(15,23,42,.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg); color:var(--ink); overscroll-behavior:none;
+  }
+  button{font:inherit; cursor:pointer; border:none; background:none; color:inherit}
+  input,select{font:inherit; color:inherit}
+  svg{display:block; touch-action:none; user-select:none}
+
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.02em}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ea580c,#f59e0b);
+    display:grid;place-items:center;color:#fff;font-size:17px; box-shadow:0 4px 12px rgba(234,88,12,.35)}
+  .brand small{display:block;font-weight:600;color:var(--ink3);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+  /* ---------- LANDING ---------- */
+  .landing{max-width:920px;margin:0 auto;padding:48px 24px 64px}
+  .landing .hero{margin:38px 0 12px}
+  .landing h1{font-size:clamp(30px,5vw,44px);letter-spacing:-.03em;line-height:1.08}
+  .landing h1 em{font-style:normal;color:var(--accent)}
+  .landing p.lead{margin-top:14px;color:var(--ink2);font-size:17px;max-width:640px;line-height:1.55}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:34px}
+  .cardBtn{display:block;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:24px;box-shadow:var(--shadow);transition:transform .15s ease, box-shadow .15s ease; text-decoration:none; color:inherit}
+  .cardBtn:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(15,23,42,.14)}
+  .cardBtn .big{font-size:30px}
+  .cardBtn h3{margin:10px 0 6px;font-size:19px;letter-spacing:-.01em}
+  .cardBtn p{color:var(--ink2);font-size:14px;line-height:1.5}
+  .landing .note{margin-top:34px;font-size:13px;color:var(--ink3);line-height:1.6;border-top:1px solid var(--line);padding-top:18px}
+
+  /* ---------- ADMIN ---------- */
+  .admin{display:flex;min-height:100vh}
+  .sidebar{width:370px;min-width:370px;background:var(--card);border-right:1px solid var(--line);
+    padding:20px 22px 40px;overflow-y:auto;max-height:100vh}
+  .sidebar h2{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin:26px 0 10px}
+  .sidebar .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+  .field input,.field select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .modeBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .modeBtn{padding:11px 10px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:13.5px;
+    display:flex;align-items:center;gap:8px;transition:all .12s}
+  .modeBtn:hover{border-color:var(--ink3)}
+  .modeBtn.active{border-color:var(--accent);background:#fff7ed;color:var(--accent2)}
+  .modeBtn .st{margin-left:auto;font-size:11px;font-weight:700;color:var(--green)}
+  .ghostBtn{width:100%;padding:10px;border-radius:12px;border:1.5px dashed var(--line);color:var(--ink2);font-size:13px;margin-top:8px}
+  .ghostBtn:hover{border-color:var(--ink3)}
+  .linkBox{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px;font-size:11.5px;word-break:break-all;
+    font-family:ui-monospace,Menlo,monospace;max-height:88px;overflow:auto;line-height:1.5}
+  .btnRow{display:flex;gap:8px;margin-top:10px}
+  .primaryBtn{flex:1;padding:12px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:14px;
+    box-shadow:0 6px 16px rgba(234,88,12,.3);transition:transform .1s}
+  .primaryBtn:active{transform:scale(.98)}
+  .primaryBtn[disabled]{opacity:.45;box-shadow:none;cursor:not-allowed}
+  .secondaryBtn{flex:1;padding:12px;border-radius:12px;background:#f1f5f9;border:1px solid var(--line);font-weight:600;font-size:14px}
+  .hint{font-size:12px;color:var(--ink3);line-height:1.55;margin-top:8px}
+  .routeStat{display:flex;gap:10px;margin-top:10px}
+  .routeStat .chip{background:#ecfdf5;color:#047857;border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:700}
+  .mapArea{flex:1;position:relative;background:#e2e8f0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .mapArea svg{width:100%;height:100%;cursor:crosshair}
+  .mapArea .modeBanner{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;
+    padding:9px 18px;border-radius:99px;font-size:13px;font-weight:600;box-shadow:var(--shadow);pointer-events:none;z-index:5}
+  @media(max-width:860px){
+    .admin{flex-direction:column}
+    .sidebar{width:100%;min-width:0;max-height:none;border-right:none;border-bottom:1px solid var(--line)}
+    .mapArea{height:65vh}
+  }
+
+  /* ---------- FIND (user view) ---------- */
+  .find{display:flex;flex-direction:column;height:100vh;height:100dvh;background:#dbe3ec}
+  .findHead{background:var(--card);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--line);z-index:10}
+  .langTgl{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;font-size:12px;font-weight:700}
+  .langTgl button{padding:6px 12px;color:var(--ink3)}
+  .langTgl button.on{background:var(--ink);color:#fff}
+  .carCard{background:var(--card);margin:12px 14px 0;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);z-index:9;position:relative}
+  .carCard .hi{font-size:12.5px;color:var(--ink2);font-weight:600}
+  .carCard .model{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+  .carMeta{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .plate{display:inline-flex;align-items:stretch;border:2px solid #1e3a8a;border-radius:6px;overflow:hidden;font-weight:800;
+    font-family:ui-monospace,Menlo,monospace;font-size:14px;background:#fff}
+  .plate .eu{background:#1d4ed8;color:#fde047;font-size:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:2px 4px;gap:2px}
+  .plate .num{padding:3px 9px;letter-spacing:.06em;color:#111}
+  .chip{background:#f1f5f9;border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:700;color:var(--ink2)}
+  .chip.stall{background:#fff7ed;border-color:#fed7aa;color:var(--accent2)}
+  .chip.dist{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+  .mapWrap{flex:1;position:relative;overflow:hidden;margin-top:-34px}
+  .mapWrap svg{width:100%;height:100%}
+  .sheet{background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.18);
+    padding:14px 18px calc(16px + env(safe-area-inset-bottom));z-index:10;position:relative}
+  .sheet .grab{width:44px;height:5px;border-radius:99px;background:var(--line);margin:0 auto 12px}
+  .stepNow{display:flex;align-items:center;gap:14px}
+  .stepNow .ic{width:48px;height:48px;border-radius:14px;background:#eff6ff;color:#1d4ed8;display:grid;place-items:center;
+    font-size:24px;font-weight:800;flex-shrink:0}
+  .stepNow .tx{font-size:16.5px;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+  .stepNow .sub{font-size:12.5px;color:var(--ink3);font-weight:600;margin-top:2px}
+  .progress{height:6px;background:#f1f5f9;border-radius:99px;margin:14px 0 12px;overflow:hidden}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#06b6d4);border-radius:99px;width:0%;transition:width .3s}
+  .actions{display:flex;gap:10px}
+  .goBtn{flex:1.4;padding:14px;border-radius:14px;background:var(--ink);color:#fff;font-weight:800;font-size:15px;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s}
+  .goBtn:active{transform:scale(.98)}
+  .flashBtn{flex:1;padding:14px;border-radius:14px;background:#fff7ed;border:1.5px solid #fdba74;color:var(--accent2);
+    font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s}
+  .flashBtn:active{transform:scale(.96)}
+  .stepList{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:none;max-height:26vh;overflow-y:auto}
+  .stepList.open{display:block}
+  .stepList .it{display:flex;gap:12px;align-items:center;padding:8px 2px;font-size:14px;color:var(--ink2)}
+  .stepList .it.done{opacity:.4;text-decoration:line-through}
+  .stepList .it.now{color:var(--ink);font-weight:700}
+  .stepList .it .n{width:26px;height:26px;border-radius:8px;background:#f1f5f9;display:grid;place-items:center;
+    font-size:13px;font-weight:700;flex-shrink:0}
+  .toggleSteps{width:100%;text-align:center;font-size:12.5px;font-weight:700;color:var(--ink3);padding:8px 0 0}
+  .toast{position:fixed;left:50%;bottom:calc(30vh);transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;
+    padding:12px 20px;border-radius:99px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;
+    transition:all .25s;z-index:60;box-shadow:var(--shadow);white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .arrive{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:40;
+    background:rgba(15,23,42,.45);backdrop-filter:blur(3px)}
+  .arrive.show{display:flex}
+  .arrive .box{background:#fff;border-radius:24px;padding:30px 28px;text-align:center;max-width:320px;margin:0 18px;
+    box-shadow:0 30px 80px rgba(0,0,0,.35);animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(.7);opacity:0}}
+  .arrive .box .big{font-size:52px}
+  .arrive .box h3{font-size:22px;margin:8px 0 4px;letter-spacing:-.02em}
+  .arrive .box p{color:var(--ink2);font-size:14.5px;line-height:1.5}
+  .arrive .box .flashBtn{width:100%;margin-top:18px}
+  .arrive .box .closeA{margin-top:10px;font-size:13px;color:var(--ink3);font-weight:600;width:100%}
+  .errBox{max-width:420px;margin:80px auto;background:#fff;border-radius:var(--radius);padding:30px;text-align:center;box-shadow:var(--shadow)}
+
+  /* SVG bits */
+  .pulseRing{animation:pulse 2s ease-out infinite;transform-origin:center;transform-box:fill-box}
+  @keyframes pulse{0%{transform:scale(.4);opacity:.8}100%{transform:scale(1.6);opacity:0}}
+  .routePath{stroke-dasharray:14 10;animation:dashmove 1.2s linear infinite}
+  @keyframes dashmove{to{stroke-dashoffset:-24}}
+  .flashRing{opacity:0}
+  .flashing .flashRing{animation:flashring 1s ease-out infinite;transform-origin:center;transform-box:fill-box}
+  @keyframes flashring{0%{transform:scale(.3);opacity:.95}100%{transform:scale(2.4);opacity:0}}
+  .flashing .headlight{animation:blinklight .5s steps(2,start) infinite}
+  @keyframes blinklight{to{visibility:hidden}}
+  .bounceIn{animation:bounceIn .4s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes bounceIn{from{transform:scale(0)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   To Hire · CarFinder — demo prototipo
+   Un unico file statico. Due viste:
+     #/admin           → pannello operatore (pin auto + pin utente + link)
+     #/find?d=<data>   → vista cliente (mappa, percorso, lampeggio)
+   Le posizioni e i dati del veicolo viaggiano codificati nell'URL:
+   nessun backend richiesto per la demo.
+   ===================================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dist = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+
+function enc(o){ return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function dec(s){ try{ s = s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length % 4) s += '='; return JSON.parse(decodeURIComponent(escape(atob(s)))); }catch(e){ return null; } }
+function rng(seed){ let s = seed >>> 0; return () => ((s = (s*1664525 + 1013904223) >>> 0) / 4294967296); }
+
+/* ================= PLANIMETRIE (generate proceduralmente) =============
+   Ogni mappa espone: svg (markup), nodes/edges/adj (grafo dei corridoi
+   percorribili per il routing), entry (punto consegna chiavi), mPerPx. */
+
+function makeGarage(o){
+  const R = rng(o.seed || 42);
+  const laneHalf = 23, stallW = 34;
+  const parts = [], nodes = [], edges = [];
+  const carCols = ['#94a3b8','#64748b','#7dd3fc','#f9a8d4','#a5b4fc','#86efac','#fcd34d','#cbd5e1','#fda4af'];
+  const t = o.theme;
+  const addNode = (x,y) => { nodes.push({x,y}); return nodes.length-1; };
+  const firstY = o.hLanes[0], lastY = o.hLanes[o.hLanes.length-1];
+
+  parts.push(`<rect x="-200" y="-200" width="${o.w+400}" height="${o.h+400}" fill="${t.bg}"/>`);
+  parts.push(`<rect x="26" y="26" width="${o.w-52}" height="${o.h-52}" rx="20" fill="${t.floor}" stroke="${t.wall}" stroke-width="7"/>`);
+
+  // corsie
+  for(const y of o.hLanes){
+    parts.push(`<rect x="48" y="${y-laneHalf}" width="${o.w-96}" height="${laneHalf*2}" rx="8" fill="${t.lane}"/>`);
+    parts.push(`<line x1="70" y1="${y}" x2="${o.w-70}" y2="${y}" stroke="${t.laneDash}" stroke-width="2" stroke-dasharray="16 14"/>`);
+  }
+  for(const x of o.vLanes){
+    parts.push(`<rect x="${x-laneHalf}" y="${firstY-laneHalf}" width="${laneHalf*2}" height="${lastY-firstY+laneHalf*2}" fill="${t.lane}"/>`);
+  }
+
+  // stalli + auto parcheggiate + etichette di zona
+  for(let i = 0; i < o.hLanes.length-1; i++){
+    const y1 = o.hLanes[i] + laneHalf + 4, y2 = o.hLanes[i+1] - laneHalf - 4;
+    const mid = (y1 + y2) / 2;
+    for(let j = 0; j < o.vLanes.length-1; j++){
+      const sx = o.vLanes[j] + laneHalf + 12, ex = o.vLanes[j+1] - laneHalf - 12;
+      const n = Math.floor((ex - sx) / stallW);
+      for(let k = 0; k < n; k++){
+        const x = sx + k*stallW;
+        for(const [ry, rh] of [[y1, mid-y1],[mid, y2-mid]]){
+          parts.push(`<rect x="${x}" y="${ry}" width="${stallW}" height="${rh}" fill="none" stroke="${t.line}" stroke-width="1.6"/>`);
+          if(R() < 0.55){
+            const c = carCols[Math.floor(R()*carCols.length)];
+            const cw = stallW-11, ch = rh-16, cx = x+5.5, cy = ry+8;
+            parts.push(`<g><rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="7" fill="${c}"/>`+
+              `<rect x="${cx+3}" y="${cy+ch*0.18}" width="${cw-6}" height="${ch*0.2}" rx="3" fill="rgba(255,255,255,.45)"/>`+
+              `<rect x="${cx+3}" y="${cy+ch*0.62}" width="${cw-6}" height="${ch*0.16}" rx="3" fill="rgba(255,255,255,.3)"/></g>`);
+          }
+        }
+      }
+      const zl = (o.zones[i]||[])[j];
+      if(zl) parts.push(`<text x="${(sx+ex)/2}" y="${mid+13}" text-anchor="middle" font-size="42" font-weight="800" fill="${t.zone}" font-family="inherit" style="letter-spacing:.05em">${zl}</text>`);
+    }
+  }
+
+  // punto di ingresso pedonale / consegna chiavi
+  const e = o.entry;
+  parts.push(`<rect x="${e.x-laneHalf}" y="${lastY}" width="${laneHalf*2}" height="${e.y-lastY}" fill="${t.lane}"/>`);
+  parts.push(`<g><rect x="${e.x-72}" y="${e.y-4}" width="144" height="52" rx="12" fill="#059669"/>`+
+    `<text x="${e.x}" y="${e.y+18}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">🚶 ${esc(e.label)}</text>`+
+    `<text x="${e.x}" y="${e.y+36}" text-anchor="middle" font-size="11" font-weight="600" fill="#a7f3d0">${esc(e.sub||'')}</text></g>`);
+
+  // POI decorativi (ascensori, casse…)
+  for(const p of (o.pois||[])){
+    parts.push(`<g><rect x="${p.x-24}" y="${p.y-18}" width="48" height="36" rx="9" fill="#334155"/>`+
+      `<text x="${p.x}" y="${p.y+6}" text-anchor="middle" font-size="16">${p.icon}</text>`+
+      (p.label?`<text x="${p.x}" y="${p.y+34}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">${esc(p.label)}</text>`:'')+`</g>`);
+  }
+  parts.push(`<text x="${o.w-46}" y="${o.h-40}" text-anchor="end" font-size="13" font-weight="700" fill="${t.zone}">${esc(o.floorTag)}</text>`);
+
+  // ------- grafo corridoi -------
+  const cols = [];
+  for(let j = 0; j < o.vLanes.length-1; j++){
+    const a = o.vLanes[j], b = o.vLanes[j+1], n = Math.max(1, Math.round((b-a)/85));
+    for(let k = 0; k < n; k++) cols.push(a + (b-a)*k/n);
+  }
+  cols.push(o.vLanes[o.vLanes.length-1]);
+  const idx = {};
+  for(const y of o.hLanes){
+    let prev = null;
+    for(const x of cols){
+      const id = addNode(x, y);
+      idx[x+','+y] = id;
+      if(prev != null) edges.push([prev, id]);
+      prev = id;
+    }
+  }
+  for(const x of o.vLanes)
+    for(let i = 0; i < o.hLanes.length-1; i++)
+      edges.push([idx[x+','+o.hLanes[i]], idx[x+','+o.hLanes[i+1]]]);
+  const eN = addNode(e.x, e.y + 20);
+  edges.push([eN, idx[e.x+','+lastY]]);
+
+  const adj = nodes.map(() => []);
+  for(const [a2,b2] of edges){
+    const d = dist(nodes[a2], nodes[b2]);
+    adj[a2].push([b2,d]); adj[b2].push([a2,d]);
+  }
+  return { id:o.id, name:o.name, w:o.w, h:o.h, mPerPx:o.mPerPx,
+           svg:parts.join(''), nodes, edges, adj, entry:{x:e.x, y:e.y+20} };
+}
+
+const MAPS = {
+  fco: makeGarage({
+    id:'fco', seed:7,
+    name:'Roma Fiumicino T3 · Parcheggio Multipiano E — Piano 2',
+    floorTag:'FCO · MULTIPIANO E · PIANO 2',
+    w:1060, h:700, mPerPx:0.14,
+    hLanes:[110, 260, 410, 560], vLanes:[100, 530, 960],
+    zones:[['A1','A2'],['B1','B2'],['C1','C2']],
+    entry:{x:100, y:640, label:'Consegna chiavi', sub:'Ascensori dal Terminal 3'},
+    pois:[{x:960, y:620, icon:'🛗', label:'Ascensori'},{x:530, y:620, icon:'💳', label:'Casse'}],
+    theme:{bg:'#cbd5e1', floor:'#eef2f7', wall:'#94a3b8', lane:'#dde5ee', laneDash:'#b6c2d2', line:'#c3ced9', zone:'#b0bdcc'}
+  }),
+  cia: makeGarage({
+    id:'cia', seed:11,
+    name:'Roma Ciampino · Parcheggio P1 — Piano terra (scoperto)',
+    floorTag:'CIA · P1 · PIANO TERRA',
+    w:900, h:600, mPerPx:0.16,
+    hLanes:[100, 240, 380], vLanes:[90, 810],
+    zones:[['P1 · A'],['P1 · B']],
+    entry:{x:90, y:530, label:'Consegna chiavi', sub:'Uscita Arrivi'},
+    pois:[{x:810, y:520, icon:'🅿️', label:'Casse P1'}],
+    theme:{bg:'#bbd3b6', floor:'#e9edf2', wall:'#8aa88f', lane:'#dbe2ea', laneDash:'#b3bfcd', line:'#c0ccd8', zone:'#adbccb'}
+  })
+};
+
+function getMap(id, data){
+  if(id === 'custom'){
+    let src = null, w = 1000, h = 700, mw = 150;
+    try{ const c = JSON.parse(localStorage.getItem('th_custom') || 'null'); if(c){ src = c.src; w = c.w; h = c.h; } }catch(e){}
+    if(data && data.mw) mw = data.mw;
+    if(!src) return null;
+    return { id:'custom', name:'Planimetria personalizzata', w, h, mPerPx: mw / w,
+             svg:`<rect x="-200" y="-200" width="${w+400}" height="${h+400}" fill="#cbd5e1"/><image href="${src}" x="0" y="0" width="${w}" height="${h}"/>`,
+             nodes:[], edges:[], adj:[], entry:{x:w/2, y:h-40} };
+  }
+  return MAPS[id] || null;
+}
+
+/* ================= ROUTING (Dijkstra sul grafo corridoi) ============== */
+
+function projectOn(p, A, B){
+  const dx = B.x-A.x, dy = B.y-A.y, L2 = dx*dx + dy*dy;
+  let t = L2 ? ((p.x-A.x)*dx + (p.y-A.y)*dy) / L2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return { x:A.x + dx*t, y:A.y + dy*t };
+}
+function snapEdge(map, p){
+  let best = null;
+  for(const [i,j] of map.edges){
+    const q = projectOn(p, map.nodes[i], map.nodes[j]);
+    const d = dist(p, q);
+    if(!best || d < best.d) best = { d, q, i, j };
+  }
+  return best;
+}
+function cleanPath(pts){
+  const out = [];
+  for(const p of pts){
+    if(out.length && dist(out[out.length-1], p) < 3) continue;
+    out.push({x:p.x, y:p.y});
+  }
+  // fondi punti quasi collineari
+  for(let i = 1; i < out.length-1; i++){
+    const a = out[i-1], b = out[i], c = out[i+1];
+    const v1 = {x:b.x-a.x, y:b.y-a.y}, v2 = {x:c.x-b.x, y:c.y-b.y};
+    const cross = v1.x*v2.y - v1.y*v2.x, dot = v1.x*v2.x + v1.y*v2.y;
+    const ang = Math.abs(Math.atan2(cross, dot));
+    if(ang < 0.14){ out.splice(i,1); i--; }
+  }
+  return out;
+}
+function route(map, a, b, waypoints){
+  if(waypoints && waypoints.length) return cleanPath([a, ...waypoints, b]);
+  if(!map.edges.length) return cleanPath([a, b]);
+  const A = snapEdge(map, a), B = snapEdge(map, b);
+  if(A.i === B.i && A.j === B.j) return cleanPath([a, A.q, B.q, b]);
+  const n = map.nodes.length, N = n + 2;
+  const pos = i => i < n ? map.nodes[i] : (i === n ? A.q : B.q);
+  const D = new Array(N).fill(Infinity), P = new Array(N).fill(-1), done = new Array(N).fill(false);
+  const nbrs = i => {
+    if(i === n)   return [[A.i, dist(A.q, map.nodes[A.i])], [A.j, dist(A.q, map.nodes[A.j])]];
+    if(i === n+1) return [[B.i, dist(B.q, map.nodes[B.i])], [B.j, dist(B.q, map.nodes[B.j])]];
+    const base = map.adj[i].slice();
+    if(i === A.i || i === A.j) base.push([n,   dist(map.nodes[i], A.q)]);
+    if(i === B.i || i === B.j) base.push([n+1, dist(map.nodes[i], B.q)]);
+    return base;
+  };
+  D[n] = 0;
+  for(;;){
+    let u = -1, bd = Infinity;
+    for(let i = 0; i < N; i++) if(!done[i] && D[i] < bd){ bd = D[i]; u = i; }
+    if(u === -1 || u === n+1) break;
+    done[u] = true;
+    for(const [v,w] of nbrs(u)) if(D[u]+w < D[v]){ D[v] = D[u]+w; P[v] = u; }
+  }
+  const chain = [];
+  for(let cur = n+1; cur !== -1; cur = P[cur]) chain.unshift(pos(cur));
+  return cleanPath([a, ...chain, b]);
+}
+function pathLen(pts){ let L = 0; for(let i = 0; i < pts.length-1; i++) L += dist(pts[i], pts[i+1]); return L; }
+function roundedPathD(pts, r){
+  r = r || 15;
+  if(pts.length < 2) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for(let i = 1; i < pts.length-1; i++){
+    const p = pts[i], a = pts[i-1], b = pts[i+1];
+    const r1 = Math.min(r, dist(p,a)/2), r2 = Math.min(r, dist(p,b)/2);
+    const in1 = { x: p.x + (a.x-p.x)/dist(p,a)*r1, y: p.y + (a.y-p.y)/dist(p,a)*r1 };
+    const out1 = { x: p.x + (b.x-p.x)/dist(p,b)*r2, y: p.y + (b.y-p.y)/dist(p,b)*r2 };
+    d += ` L ${in1.x} ${in1.y} Q ${p.x} ${p.y} ${out1.x} ${out1.y}`;
+  }
+  d += ` L ${pts[pts.length-1].x} ${pts[pts.length-1].y}`;
+  return d;
+}
+
+/* ================= ISTRUZIONI TESTUALI ================================ */
+
+const I18N = {
+  it: {
+    yourCar: m => `La tua ${m} ti aspetta`, hi: 'Ciao! 👋',
+    stall: 'Stallo', walk: (d,t) => `${d} m · ${t} min a piedi`,
+    start: 'Avvia percorso', navOn: 'In cammino…', restart: 'Ripeti percorso',
+    flash: 'Trova l’auto', steps: 'Mostra tutte le indicazioni', hideSteps: 'Nascondi indicazioni',
+    startStep: 'Parti dal punto di consegna chiavi',
+    goThen: (m,t) => `Prosegui per ${m} m, poi gira a ${t === 'L' ? 'sinistra' : 'destra'}`,
+    uturn: m => `Prosegui per ${m} m, poi torna indietro`,
+    finalStep: (m,st) => `Ancora ${m} m — la tua auto è ${st ? 'allo stallo ' + st : 'lì'}`,
+    left: 'a ${d} m da te', remaining: m => `${m} m all’auto`,
+    arrivedT: 'Eccola! 🎉', arrivedP: st => `Sei arrivato${st ? ' allo stallo ' + st : ''}. Premi il pulsante e l’auto lampeggerà per farsi riconoscere.`,
+    flashSent: 'Comando inviato al dispositivo di bordo 💡🔊', close: 'Chiudi',
+    youAreHere: 'Tu sei qui', poweredBy: 'Demo · dispositivo telematico To Hire'
+  },
+  en: {
+    yourCar: m => `Your ${m} is waiting`, hi: 'Hi there! 👋',
+    stall: 'Bay', walk: (d,t) => `${d} m · ${t} min walk`,
+    start: 'Start walking route', navOn: 'Walking…', restart: 'Replay route',
+    flash: 'Find my car', steps: 'Show all directions', hideSteps: 'Hide directions',
+    startStep: 'Start from the key pick-up desk',
+    goThen: (m,t) => `Walk ${m} m, then turn ${t === 'L' ? 'left' : 'right'}`,
+    uturn: m => `Walk ${m} m, then turn back`,
+    finalStep: (m,st) => `${m} m to go — your car is ${st ? 'in bay ' + st : 'right there'}`,
+    remaining: m => `${m} m to your car`,
+    arrivedT: 'There it is! 🎉', arrivedP: st => `You’ve arrived${st ? ' at bay ' + st : ''}. Tap the button and the car will flash its lights so you can spot it.`,
+    flashSent: 'Command sent to the on-board device 💡🔊', close: 'Close',
+    youAreHere: 'You are here', poweredBy: 'Demo · To Hire telematics device'
+  }
+};
+
+function buildSteps(pts, mPerPx, L, stall){
+  const steps = [];
+  const ends = []; // distanza (px) cumulativa a cui termina ogni step
+  steps.push({ icon:'🚶', text: L.startStep }); ends.push(0);
+  let acc = 0, cum = 0;
+  for(let i = 0; i < pts.length-1; i++){
+    const seg = dist(pts[i], pts[i+1]);
+    acc += seg; cum += seg;
+    if(i+1 < pts.length-1){
+      const a = pts[i], b = pts[i+1], c = pts[i+2];
+      const v1 = {x:b.x-a.x, y:b.y-a.y}, v2 = {x:c.x-b.x, y:c.y-b.y};
+      const cross = v1.x*v2.y - v1.y*v2.x, dot = v1.x*v2.x + v1.y*v2.y;
+      const ang = Math.atan2(Math.abs(cross), dot);
+      if(ang > 0.48){
+        const m = Math.max(1, Math.round(acc * mPerPx));
+        if(ang > 2.6) steps.push({ icon:'⤵', text: L.uturn(m) });
+        else steps.push({ icon: cross < 0 ? '↰' : '↱', text: L.goThen(m, cross < 0 ? 'L' : 'R') });
+        ends.push(cum); acc = 0;
+      }
+    }
+  }
+  steps.push({ icon:'🚗', text: L.finalStep(Math.max(1, Math.round(acc * mPerPx)), stall) });
+  ends.push(cum);
+  return { steps, ends };
+}
+
+/* ================= PAN & ZOOM ========================================= */
+
+function panZoom(svg, vb0, opts){
+  opts = opts || {};
+  let vb = (opts.initial || vb0).slice();
+  const apply = () => svg.setAttribute('viewBox', vb.join(' '));
+  apply();
+  const ptrs = new Map();
+  let startVB = null, startPts = null, movedPx = 0, lastTouch = 0;
+  const scaleF = () => vb[2] / svg.clientWidth;
+  const clamp = () => {
+    vb[2] = Math.max(vb0[2]/10, Math.min(vb0[2]*1.3, vb[2]));
+    vb[3] = vb[2] * (vb0[3]/vb0[2]);
+  };
+  svg.addEventListener('pointerdown', e => {
+    svg.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    startVB = vb.slice(); startPts = [...ptrs.values()].map(p => ({...p})); movedPx = 0;
+    lastTouch = performance.now();
+  });
+  svg.addEventListener('pointermove', e => {
+    if(!ptrs.has(e.pointerId)) return;
+    ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const pts = [...ptrs.values()];
+    lastTouch = performance.now();
+    if(pts.length === 1 && startPts && startPts.length === 1){
+      const dx = (pts[0].x - startPts[0].x), dy = (pts[0].y - startPts[0].y);
+      movedPx = Math.max(movedPx, Math.hypot(dx,dy));
+      const f = startVB[2] / svg.clientWidth;
+      vb[0] = startVB[0] - dx*f; vb[1] = startVB[1] - dy*f;
+      apply();
+    } else if(pts.length >= 2 && startPts && startPts.length >= 2){
+      movedPx = 99;
+      const d0 = Math.hypot(startPts[0].x-startPts[1].x, startPts[0].y-startPts[1].y) || 1;
+      const d1 = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y) || 1;
+      const k = d0/d1;
+      const mx = (startPts[0].x+startPts[1].x)/2, my = (startPts[0].y+startPts[1].y)/2;
+      const f = startVB[2] / svg.clientWidth;
+      const wx = startVB[0] + (mx - svg.getBoundingClientRect().left)*f;
+      const wy = startVB[1] + (my - svg.getBoundingClientRect().top)*f;
+      vb[2] = startVB[2]*k; clamp();
+      const f2 = vb[2] / startVB[2];
+      vb[0] = wx - (wx - startVB[0])*f2; vb[1] = wy - (wy - startVB[1])*f2;
+      apply();
+    }
+  });
+  const up = e => {
+    ptrs.delete(e.pointerId);
+    if(ptrs.size === 0 && movedPx < 6 && opts.onTap){
+      const r = svg.getBoundingClientRect();
+      const f = vb[2] / r.width;
+      opts.onTap({ x: vb[0] + (e.clientX - r.left)*f, y: vb[1] + (e.clientY - r.top)*f });
+    }
+    startPts = null;
+  };
+  svg.addEventListener('pointerup', up);
+  svg.addEventListener('pointercancel', up);
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    lastTouch = performance.now();
+    const r = svg.getBoundingClientRect();
+    const f = vb[2]/r.width;
+    const wx = vb[0] + (e.clientX-r.left)*f, wy = vb[1] + (e.clientY-r.top)*f;
+    const k = Math.pow(1.0016, e.deltaY);
+    const old = vb[2]; vb[2] *= k; clamp();
+    const f2 = vb[2]/old;
+    vb[0] = wx - (wx-vb[0])*f2; vb[1] = wy - (wy-vb[1])*f2;
+    apply();
+  }, {passive:false});
+  return {
+    center(x, y, w){
+      if(performance.now() - lastTouch < 2500) return; // l'utente sta toccando: non rubargli la camera
+      const tw = w || vb[2];
+      vb[0] += ((x - tw/2) - vb[0]) * 0.12;
+      vb[1] += ((y - tw*(vb0[3]/vb0[2])/2 + tw*0.06) - vb[1]) * 0.12;
+      vb[2] += (tw - vb[2]) * 0.12; vb[3] = vb[2]*(vb0[3]/vb0[2]);
+      apply();
+    },
+    fit(){ vb = vb0.slice(); apply(); }
+  };
+}
+
+/* ================= MARKER SVG ========================================= */
+
+function carPinSVG(x, y, label){
+  return `<g id="carPin" transform="translate(${x},${y})">
+    <circle class="flashRing" r="30" fill="none" stroke="#f59e0b" stroke-width="5"/>
+    <circle class="flashRing" style="animation-delay:.33s" r="30" fill="none" stroke="#f59e0b" stroke-width="5"/>
+    <ellipse cx="0" cy="4" rx="14" ry="5" fill="rgba(15,23,42,.25)"/>
+    <path d="M0 0 L -13 -26 A 18.5 18.5 0 1 1 13 -26 Z" fill="#e11d48" stroke="#fff" stroke-width="2.5"/>
+    <circle cx="0" cy="-34" r="12.5" fill="#fff"/>
+    <text x="0" y="-28.5" text-anchor="middle" font-size="15">🚗</text>
+    <circle class="headlight" cx="-8" cy="-45" r="3.4" fill="#fbbf24" opacity="0" />
+    <circle class="headlight" cx="8"  cy="-45" r="3.4" fill="#fbbf24" opacity="0" />
+    ${label ? `<g transform="translate(0,-64)"><rect x="-62" y="-15" width="124" height="24" rx="12" fill="#0f172a"/>
+      <text x="0" y="1.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">${esc(label)}</text></g>` : ''}
+  </g>`;
+}
+function userDotSVG(x, y, label){
+  return `<g id="userDot" transform="translate(${x},${y})">
+    <circle class="pulseRing" r="22" fill="rgba(37,99,235,.30)"/>
+    <circle r="8" fill="#2563eb" stroke="#fff" stroke-width="3.5"/>
+    ${label ? `<g transform="translate(0,26)"><rect x="-46" y="-1" width="92" height="22" rx="11" fill="#2563eb"/>
+      <text x="0" y="14" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">${esc(label)}</text></g>` : ''}
+  </g>`;
+}
+function routeSVG(pts){
+  if(!pts || pts.length < 2) return '';
+  const d = roundedPathD(pts);
+  const end = pts[pts.length-1];
+  return `<g id="routeG">
+    <path d="${d}" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+    <path class="routePath" d="${d}" fill="none" stroke="#2563eb" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${end.x}" cy="${end.y}" r="7" fill="#2563eb" stroke="#fff" stroke-width="3"/>
+  </g>`;
+}
+
+/* ================= VISTA ADMIN ======================================== */
+
+const AD_KEY = 'th_admin_v1';
+let AD = null;
+function adLoad(){
+  try{ AD = JSON.parse(localStorage.getItem(AD_KEY) || 'null'); }catch(e){ AD = null; }
+  if(!AD) AD = { mapId:'fco', mode:null, u:null, c:null, w:[], mw:150,
+                 car:{ tg:'GA 129 KX', md:'Fiat 500 Hybrid', cl:'Bianco Gelato', st:'B2-14' } };
+}
+function adSave(){ localStorage.setItem(AD_KEY, JSON.stringify(AD)); }
+
+function findURL(){
+  if(!AD.u || !AD.c) return null;
+  const data = { v:1, m:AD.mapId, u:AD.u, c:AD.c, car:AD.car };
+  if(AD.w.length) data.w = AD.w.map(p => [Math.round(p.x), Math.round(p.y)]);
+  if(AD.mapId === 'custom') data.mw = AD.mw;
+  return location.href.split('#')[0] + '#/find?d=' + enc(data);
+}
+
+function renderAdmin(){
+  adLoad();
+  const app = $('#app');
+  app.innerHTML = `
+  <div class="admin">
+    <aside class="sidebar">
+      <div class="topbar">
+        <a href="#/" style="text-decoration:none;color:inherit"><div class="brand">
+          <div class="logo">TH</div>
+          <div>To Hire <small>CarFinder · Admin</small></div>
+        </div></a>
+      </div>
+
+      <h2>1 · Planimetria</h2>
+      <div class="field">
+        <select id="mapSel">
+          <option value="fco">✈️ Fiumicino T3 — Multipiano E, Piano 2</option>
+          <option value="cia">✈️ Ciampino — P1, Piano terra</option>
+          <option value="custom">🖼 Planimetria personalizzata (upload)</option>
+        </select>
+      </div>
+      <div id="customBox" style="display:none">
+        <div class="field"><label>Carica immagine planimetria (es. PDF ADR esportato in PNG/JPG)</label>
+          <input type="file" id="mapFile" accept="image/*"></div>
+        <div class="field"><label>Larghezza reale dell'area (metri) — per calcolare le distanze</label>
+          <input type="number" id="mapMeters" min="10" max="2000" value="${AD.mw}"></div>
+        <p class="hint">⚠️ In questa demo la planimetria caricata resta sul <b>tuo</b> browser: il link cliente con mappa personalizzata funziona solo aperto da questo stesso dispositivo. Con le mappe integrate il link funziona ovunque.</p>
+      </div>
+
+      <h2>2 · Dati veicolo</h2>
+      <div class="row2">
+        <div class="field"><label>Targa</label><input id="fTg" value="${esc(AD.car.tg)}"></div>
+        <div class="field"><label>Stallo</label><input id="fSt" value="${esc(AD.car.st)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Modello</label><input id="fMd" value="${esc(AD.car.md)}"></div>
+        <div class="field"><label>Colore</label><input id="fCl" value="${esc(AD.car.cl)}"></div>
+      </div>
+
+      <h2>3 · Posizionamento sulla mappa</h2>
+      <div class="modeBtns">
+        <button class="modeBtn" data-mode="car">🚗 Auto <span class="st">${AD.c ? '✓' : ''}</span></button>
+        <button class="modeBtn" data-mode="user">🧍 Cliente <span class="st">${AD.u ? '✓' : ''}</span></button>
+      </div>
+      <button class="ghostBtn" id="wpBtn">➕ Waypoint percorso manuale (${AD.w.length})</button>
+      <button class="ghostBtn" id="resetBtn">🗑 Azzera pin e waypoint</button>
+      <p class="hint">Seleziona una modalità e <b>clicca sulla mappa</b>. Sulle mappe integrate il percorso viene calcolato automaticamente lungo i corridoi; i waypoint servono per tracciarlo a mano (obbligatori sulla planimetria personalizzata).</p>
+      <div class="routeStat" id="routeStat"></div>
+
+      <h2>4 · Link per il cliente</h2>
+      <div class="linkBox" id="linkBox">Posiziona auto e cliente per generare il link…</div>
+      <div class="btnRow">
+        <button class="primaryBtn" id="copyBtn" disabled>📋 Copia link</button>
+        <button class="secondaryBtn" id="openBtn" disabled>▶ Apri demo</button>
+      </div>
+      <p class="hint">Nel prodotto reale questo link parte via <b>SMS / e-mail / QR</b> al momento della consegna chiavi, e la posizione dell'auto arriva in automatico dal dispositivo To Hire a bordo.</p>
+    </aside>
+
+    <div class="mapArea">
+      <div class="modeBanner" id="modeBanner" style="display:none"></div>
+      <svg id="adminSvg" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>`;
+
+  $('#mapSel').value = AD.mapId;
+  $('#customBox').style.display = AD.mapId === 'custom' ? 'block' : 'none';
+
+  const svg = $('#adminSvg');
+  let pz = null;
+
+  function drawMap(){
+    const map = getMap(AD.mapId, AD);
+    if(!map){
+      svg.innerHTML = `<rect x="0" y="0" width="1000" height="700" fill="#e2e8f0"/>
+        <text x="500" y="340" text-anchor="middle" font-size="26" fill="#64748b" font-weight="700">Carica un'immagine della planimetria 🖼</text>
+        <text x="500" y="378" text-anchor="middle" font-size="16" fill="#94a3b8">Esporta la mappa ADR (adr.it) come immagine e caricala qui a sinistra</text>`;
+      svg.setAttribute('viewBox','0 0 1000 700');
+      pz = null;
+      return;
+    }
+    let overlay = '';
+    if(AD.u && AD.c){
+      const pts = route(map, AD.u, AD.c, AD.w);
+      overlay += routeSVG(pts);
+      const m = Math.round(pathLen(pts) * map.mPerPx);
+      $('#routeStat').innerHTML = `<span class="chip">📏 ${m} m</span><span class="chip">🚶 ~${Math.max(1, Math.round(m/78))} min</span>`;
+    } else {
+      $('#routeStat').innerHTML = '';
+    }
+    for(const [i,p] of AD.w.entries())
+      overlay += `<g transform="translate(${p.x},${p.y})"><circle r="9" fill="#f59e0b" stroke="#fff" stroke-width="2.5"/><text y="4" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${i+1}</text></g>`;
+    if(AD.u) overlay += userDotSVG(AD.u.x, AD.u.y, 'Cliente');
+    if(AD.c) overlay += carPinSVG(AD.c.x, AD.c.y, esc(AD.car.st ? 'Stallo ' + AD.car.st : ''));
+    svg.innerHTML = map.svg + overlay;
+    if(!pz){
+      pz = panZoom(svg, [0, 0, map.w, map.h], { onTap(p){
+        if(!AD.mode) return;
+        if(AD.mode === 'car') { AD.c = {x:Math.round(p.x), y:Math.round(p.y)}; }
+        else if(AD.mode === 'user') { AD.u = {x:Math.round(p.x), y:Math.round(p.y)}; }
+        else if(AD.mode === 'wp') { AD.w.push({x:Math.round(p.x), y:Math.round(p.y)}); }
+        adSave(); refresh();
+      }});
+    }
+  }
+
+  function refresh(){
+    drawMap();
+    document.querySelectorAll('.modeBtn').forEach(b => b.classList.toggle('active', b.dataset.mode === AD.mode));
+    $('#wpBtn').textContent = `➕ Waypoint percorso manuale (${AD.w.length})`;
+    $('#wpBtn').style.borderColor = AD.mode === 'wp' ? 'var(--accent)' : '';
+    $('#wpBtn').style.color = AD.mode === 'wp' ? 'var(--accent2)' : '';
+    document.querySelectorAll('.modeBtn .st')[0].textContent = AD.c ? '✓' : '';
+    document.querySelectorAll('.modeBtn .st')[1].textContent = AD.u ? '✓' : '';
+    const banner = $('#modeBanner');
+    if(AD.mode){
+      banner.style.display = 'block';
+      banner.textContent = AD.mode === 'car' ? '🚗 Clicca sulla mappa dove si trova l’auto'
+        : AD.mode === 'user' ? '🧍 Clicca sul punto di partenza del cliente (consegna chiavi)'
+        : '➕ Clicca per aggiungere waypoint al percorso';
+    } else banner.style.display = 'none';
+    const url = findURL();
+    $('#linkBox').textContent = url || 'Posiziona auto e cliente per generare il link…';
+    $('#copyBtn').disabled = $('#openBtn').disabled = !url;
+  }
+
+  // eventi
+  $('#mapSel').addEventListener('change', e => {
+    AD.mapId = e.target.value; AD.u = AD.c = null; AD.w = []; pz = null;
+    $('#customBox').style.display = AD.mapId === 'custom' ? 'block' : 'none';
+    adSave(); refresh();
+  });
+  const mf = $('#mapFile');
+  if(mf) mf.addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // ridimensiona per non gonfiare localStorage
+        const scale = Math.min(1, 1400/img.width);
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(img.width*scale); cv.height = Math.round(img.height*scale);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        try{
+          localStorage.setItem('th_custom', JSON.stringify({src:cv.toDataURL('image/jpeg', .82), w:cv.width, h:cv.height}));
+        }catch(err){ alert('Immagine troppo grande per la demo: prova con una risoluzione inferiore.'); return; }
+        AD.u = AD.c = null; AD.w = []; pz = null;
+        adSave(); refresh();
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+  const mm = $('#mapMeters');
+  if(mm) mm.addEventListener('change', e => { AD.mw = +e.target.value || 150; adSave(); refresh(); });
+  document.querySelectorAll('.modeBtn').forEach(b => b.addEventListener('click', () => {
+    AD.mode = AD.mode === b.dataset.mode ? null : b.dataset.mode; adSave(); refresh();
+  }));
+  $('#wpBtn').addEventListener('click', () => { AD.mode = AD.mode === 'wp' ? null : 'wp'; adSave(); refresh(); });
+  $('#resetBtn').addEventListener('click', () => { AD.u = AD.c = null; AD.w = []; AD.mode = null; adSave(); refresh(); });
+  for(const [id,k] of [['fTg','tg'],['fSt','st'],['fMd','md'],['fCl','cl']])
+    $('#'+id).addEventListener('input', e => { AD.car[k] = e.target.value; adSave(); refresh(); });
+  $('#copyBtn').addEventListener('click', async () => {
+    const url = findURL(); if(!url) return;
+    try{ await navigator.clipboard.writeText(url); }catch(e){
+      const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    $('#copyBtn').textContent = '✅ Copiato!';
+    setTimeout(() => $('#copyBtn').textContent = '📋 Copia link', 1600);
+  });
+  $('#openBtn').addEventListener('click', () => { const u = findURL(); if(u) window.open(u, '_blank'); });
+
+  refresh();
+}
+
+/* ================= VISTA CLIENTE (find) =============================== */
+
+let FIND_LANG = localStorage.getItem('th_lang') || 'it';
+
+function renderFind(data){
+  const app = $('#app');
+  const L = I18N[FIND_LANG];
+  const map = getMap(data.m, data);
+  if(!map){
+    app.innerHTML = `<div class="errBox"><div style="font-size:44px">🗺️</div>
+      <h3 style="margin:10px 0 8px">Planimetria non disponibile</h3>
+      <p style="color:var(--ink2);font-size:14px;line-height:1.5">Questo link usa una planimetria personalizzata caricata su un altro dispositivo. Nella demo le mappe caricate restano locali: apri il link dallo stesso browser dell'admin, oppure usa una mappa integrata.</p>
+      <div class="btnRow" style="justify-content:center"><a class="secondaryBtn" style="text-decoration:none;text-align:center" href="#/admin">Vai all'admin</a></div></div>`;
+    return;
+  }
+  const wps = (data.w || []).map(p => ({x:p[0], y:p[1]}));
+  const pts = route(map, data.u, data.c, wps);
+  const totalPx = pathLen(pts);
+  const totalM = Math.max(1, Math.round(totalPx * map.mPerPx));
+  const totalMin = Math.max(1, Math.round(totalM / 78));
+  const { steps, ends } = buildSteps(pts, map.mPerPx, L, data.car && data.car.st);
+  const car = data.car || {};
+
+  app.innerHTML = `
+  <div class="find">
+    <div class="findHead">
+      <div class="brand"><div class="logo">TH</div><div style="font-size:15px">To Hire <small>CarFinder</small></div></div>
+      <div class="langTgl">
+        <button data-l="it" class="${FIND_LANG === 'it' ? 'on' : ''}">IT</button>
+        <button data-l="en" class="${FIND_LANG === 'en' ? 'on' : ''}">EN</button>
+      </div>
+    </div>
+
+    <div class="carCard">
+      <div class="hi">${L.hi}</div>
+      <div class="model">${esc(L.yourCar(car.md || 'auto'))}</div>
+      <div class="carMeta">
+        ${car.tg ? `<span class="plate"><span class="eu">★<br>I</span><span class="num">${esc(car.tg)}</span></span>` : ''}
+        ${car.st ? `<span class="chip stall">📍 ${L.stall} ${esc(car.st)}</span>` : ''}
+        <span class="chip dist" id="distChip">🚶 ${L.walk(totalM, totalMin)}</span>
+        ${car.cl ? `<span class="chip">${esc(car.cl)}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="mapWrap">
+      <svg id="findSvg" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="arrive" id="arrive">
+        <div class="box">
+          <div class="big">🎉</div>
+          <h3>${L.arrivedT}</h3>
+          <p>${esc(L.arrivedP(car.st))}</p>
+          <button class="flashBtn" id="flashBtn2">💡 ${L.flash}</button>
+          <button class="closeA" id="closeArr">${L.close}</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="stepNow">
+        <div class="ic" id="stepIc">${steps[0].icon}</div>
+        <div>
+          <div class="tx" id="stepTx">${esc(steps[0].text)}</div>
+          <div class="sub" id="stepSub">${L.remaining(totalM)}</div>
+        </div>
+      </div>
+      <div class="progress"><i id="progBar"></i></div>
+      <div class="actions">
+        <button class="goBtn" id="goBtn">▶ ${L.start}</button>
+        <button class="flashBtn" id="flashBtn">💡 ${L.flash}</button>
+      </div>
+      <button class="toggleSteps" id="tglSteps">${L.steps} ▾</button>
+      <div class="stepList" id="stepList">
+        ${steps.map((s,i) => `<div class="it" data-i="${i}"><span class="n">${s.icon}</span><span>${esc(s.text)}</span></div>`).join('')}
+      </div>
+      <div style="text-align:center;font-size:10.5px;color:var(--ink3);margin-top:10px;font-weight:600">${L.poweredBy}</div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>`;
+
+  // lingua
+  document.querySelectorAll('.langTgl button').forEach(b => b.addEventListener('click', () => {
+    FIND_LANG = b.dataset.l; localStorage.setItem('th_lang', FIND_LANG); renderFind(data);
+  }));
+
+  // mappa
+  const svg = $('#findSvg');
+  svg.innerHTML = map.svg + routeSVG(pts) + carPinSVG(data.c.x, data.c.y, car.st ? (FIND_LANG === 'it' ? 'Stallo ' : 'Bay ') + car.st : '') + userDotSVG(data.u.x, data.u.y, L.youAreHere);
+  // inquadratura iniziale sul percorso (con margine), mantenendo l'aspect della mappa
+  const all = pts.concat([data.c, data.u]);
+  const bx1 = Math.min(...all.map(p => p.x)) - 90, bx2 = Math.max(...all.map(p => p.x)) + 90;
+  const by1 = Math.min(...all.map(p => p.y)) - 120, by2 = Math.max(...all.map(p => p.y)) + 90;
+  const ratio = (svg.clientWidth && svg.clientHeight) ? svg.clientWidth / svg.clientHeight : map.w / map.h;
+  let iw = bx2 - bx1, ih = by2 - by1;
+  if(iw / ih < ratio) iw = ih * ratio; else ih = iw / ratio;
+  const icx = (bx1 + bx2) / 2, icy = (by1 + by2) / 2;
+  const pz = panZoom(svg, [0, 0, map.w, map.h], { initial: [icx - iw/2, icy - ih/2, iw, ih] });
+
+  // distanze cumulative per la simulazione
+  const cum = [0];
+  for(let i = 0; i < pts.length-1; i++) cum.push(cum[i] + dist(pts[i], pts[i+1]));
+  const posAt = s => {
+    s = Math.max(0, Math.min(totalPx, s));
+    let i = 0; while(i < cum.length-2 && cum[i+1] < s) i++;
+    const t = (s - cum[i]) / Math.max(0.001, cum[i+1]-cum[i]);
+    return { x: pts[i].x + (pts[i+1].x-pts[i].x)*t, y: pts[i].y + (pts[i+1].y-pts[i].y)*t };
+  };
+
+  let anim = null, arrivedShown = false;
+  function setStepUI(sPx){
+    let idx = 0;
+    for(let i = 0; i < ends.length; i++) if(sPx >= ends[i]-1) idx = Math.min(i+1, steps.length-1);
+    $('#stepIc').textContent = steps[idx].icon;
+    $('#stepTx').textContent = steps[idx].text;
+    const remM = Math.max(0, Math.round((totalPx - sPx) * map.mPerPx));
+    $('#stepSub').textContent = I18N[FIND_LANG].remaining(remM);
+    $('#distChip').textContent = '🚶 ' + I18N[FIND_LANG].remaining(remM);
+    $('#progBar').style.width = (sPx/totalPx*100) + '%';
+    document.querySelectorAll('#stepList .it').forEach((el,i) => {
+      el.classList.toggle('done', i < idx);
+      el.classList.toggle('now', i === idx);
+    });
+  }
+  function startSim(){
+    if(anim) cancelAnimationFrame(anim);
+    arrivedShown = false;
+    $('#arrive').classList.remove('show');
+    const speedPx = 1.35 / map.mPerPx * 3.2; // 1.35 m/s accelerato 3.2x per la demo
+    let s = 0, last = performance.now();
+    $('#goBtn').innerHTML = '⏸ ' + I18N[FIND_LANG].navOn;
+    const dot = $('#userDot');
+    const tick = now => {
+      s += (now - last)/1000 * speedPx; last = now;
+      const p = posAt(s);
+      dot.setAttribute('transform', `translate(${p.x},${p.y})`);
+      setStepUI(s);
+      pz.center(p.x, p.y, map.w/2.4);
+      if(s >= totalPx){
+        $('#goBtn').innerHTML = '↺ ' + I18N[FIND_LANG].restart;
+        if(!arrivedShown){ arrivedShown = true; setTimeout(() => $('#arrive').classList.add('show'), 500); }
+        anim = null; return;
+      }
+      anim = requestAnimationFrame(tick);
+    };
+    anim = requestAnimationFrame(tick);
+  }
+  $('#goBtn').addEventListener('click', () => {
+    if(anim){ cancelAnimationFrame(anim); anim = null; $('#goBtn').innerHTML = '▶ ' + I18N[FIND_LANG].start; }
+    else startSim();
+  });
+
+  // lampeggio + clacson
+  function honk(){
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ctx = window.__thAC || (window.__thAC = new AC());
+      if(ctx.state === 'suspended') ctx.resume();
+      [0, 0.32, 0.64].forEach(off => {
+        const t0 = ctx.currentTime + off;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.22, t0+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+0.22);
+        g.connect(ctx.destination);
+        [392, 494].forEach(f => {
+          const o = ctx.createOscillator();
+          o.type = 'sawtooth'; o.frequency.value = f;
+          o.connect(g); o.start(t0); o.stop(t0+0.24);
+        });
+      });
+    }catch(e){}
+  }
+  function flashCar(){
+    const pin = $('#carPin');
+    pin.classList.add('flashing');
+    pin.querySelectorAll('.headlight').forEach(h => h.setAttribute('opacity','1'));
+    honk();
+    const tst = $('#toast');
+    tst.textContent = I18N[FIND_LANG].flashSent;
+    tst.classList.add('show');
+    pz.center(data.c.x, data.c.y, map.w/2.6);
+    setTimeout(() => tst.classList.remove('show'), 2600);
+    setTimeout(() => {
+      pin.classList.remove('flashing');
+      pin.querySelectorAll('.headlight').forEach(h => h.setAttribute('opacity','0'));
+    }, 6000);
+  }
+  $('#flashBtn').addEventListener('click', flashCar);
+  $('#flashBtn2').addEventListener('click', () => { $('#arrive').classList.remove('show'); flashCar(); });
+  $('#closeArr').addEventListener('click', () => $('#arrive').classList.remove('show'));
+
+  // elenco step
+  $('#tglSteps').addEventListener('click', () => {
+    const open = $('#stepList').classList.toggle('open');
+    $('#tglSteps').textContent = (open ? I18N[FIND_LANG].hideSteps + ' ▴' : I18N[FIND_LANG].steps + ' ▾');
+  });
+
+  setStepUI(0);
+}
+
+/* ================= LANDING ============================================ */
+
+function sampleLink(){
+  const data = { v:1, m:'fco', u:{x:100, y:655}, c:{x:717, y:330},
+                 car:{ tg:'GA 129 KX', md:'Fiat 500 Hybrid', cl:'Bianco Gelato', st:'B2-14' } };
+  return '#/find?d=' + enc(data);
+}
+function renderLanding(){
+  $('#app').innerHTML = `
+  <div class="landing">
+    <div class="brand"><div class="logo">TH</div><div>To Hire <small>Telematics</small></div></div>
+    <div class="hero">
+      <h1>CarFinder<br><em>«La tua auto ti aspetta. Ti ci portiamo noi.»</em></h1>
+      <p class="lead">Demo del servizio di wayfinding per autonoleggi: al momento della consegna chiavi il cliente riceve un link. Il link lo guida sulla planimetria del parcheggio fino allo stallo esatto — e negli ultimi metri è <b>l'auto stessa a farsi trovare</b>, lampeggiando e suonando su comando, grazie al dispositivo To Hire già a bordo.</p>
+    </div>
+    <div class="cards">
+      <a class="cardBtn" href="#/admin">
+        <div class="big">🛠</div>
+        <h3>Pannello operatore</h3>
+        <p>Scegli la planimetria (Fiumicino, Ciampino o caricane una), posiziona l'auto e il punto di partenza del cliente, genera il link da inviare.</p>
+      </a>
+      <a class="cardBtn" href="${sampleLink()}">
+        <div class="big">📱</div>
+        <h3>Prova la demo cliente</h3>
+        <p>Apri subito l'esperienza che vede il cliente, con dati d'esempio già pronti: percorso guidato, indicazioni passo-passo e «trova l'auto».</p>
+      </a>
+    </div>
+    <p class="note"><b>Nota sulla demo.</b> Le planimetrie integrate sono stilizzate a scopo dimostrativo (le planimetrie ufficiali ADR si possono caricare dall'admin come immagine). La posizione del cliente è simulata: nel prodotto reale arriverebbe dal GPS del telefono all'aperto e da beacon/BLE al chiuso, mentre la posizione dell'auto arriva dal dispositivo telematico To Hire. Il comando «lampeggia e suona» qui è simulato: nel prodotto reale viaggia dal cloud To Hire al dispositivo a bordo.</p>
+  </div>`;
+}
+
+/* ================= ROUTER ============================================= */
+
+function render(){
+  const h = location.hash || '#/';
+  if(h.startsWith('#/admin')) return renderAdmin();
+  if(h.startsWith('#/find')){
+    const q = h.split('?')[1] || '';
+    const m = /(?:^|&)d=([^&]+)/.exec(q);
+    const data = m ? dec(m[1]) : null;
+    if(data && data.u && data.c && data.m) return renderFind(data);
+    $('#app').innerHTML = '<div class="errBox"><div style="font-size:44px">🔗</div><h3 style="margin:10px 0 8px">Link non valido</h3><p style="color:var(--ink2)">Genera un nuovo link dal pannello admin.</p><div class="btnRow" style="justify-content:center"><a class="secondaryBtn" style="text-decoration:none;text-align:center" href="#/admin">Vai all’admin</a></div></div>';
+    return;
+  }
+  renderLanding();
+}
+window.addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
