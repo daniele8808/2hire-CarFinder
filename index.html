@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>To Hire · CarFinder — Demo</title>
+<title>2hire · CarFinder — Demo</title>
 <style>
   :root{
     --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
@@ -165,7 +165,7 @@
 <script>
 'use strict';
 /* =====================================================================
-   To Hire · CarFinder — demo prototipo
+   2hire · CarFinder — demo prototipo
    Un unico file statico. Due viste:
      #/admin           → pannello operatore (pin auto + pin utente + link)
      #/find?d=<data>   → vista cliente (mappa, percorso, lampeggio)
@@ -185,121 +185,196 @@ function rng(seed){ let s = seed >>> 0; return () => ((s = (s*1664525 + 10139042
    Ogni mappa espone: svg (markup), nodes/edges/adj (grafo dei corridoi
    percorribili per il routing), entry (punto consegna chiavi), mPerPx. */
 
-function makeGarage(o){
+function makeAirport(o){
   const R = rng(o.seed || 42);
-  const laneHalf = 23, stallW = 34;
-  const parts = [], nodes = [], edges = [];
-  const carCols = ['#94a3b8','#64748b','#7dd3fc','#f9a8d4','#a5b4fc','#86efac','#fcd34d','#cbd5e1','#fda4af'];
   const t = o.theme;
+  const parts = [], nodes = [], edges = [];
   const addNode = (x,y) => { nodes.push({x,y}); return nodes.length-1; };
-  const firstY = o.hLanes[0], lastY = o.hLanes[o.hLanes.length-1];
+  const laneHalf = 22, stallW = 32;
+  const carCols = ['#94a3b8','#64748b','#7dd3fc','#f9a8d4','#a5b4fc','#86efac','#fcd34d','#cbd5e1','#fda4af'];
+  const K = (x,y) => x+','+y;
 
-  parts.push(`<rect x="-200" y="-200" width="${o.w+400}" height="${o.h+400}" fill="${t.bg}"/>`);
-  parts.push(`<rect x="26" y="26" width="${o.w-52}" height="${o.h-52}" rx="20" fill="${t.floor}" stroke="${t.wall}" stroke-width="7"/>`);
+  // ---------- sfondo ----------
+  parts.push(`<rect x="-300" y="-300" width="${o.w+600}" height="${o.h+600}" fill="${t.bg}"/>`);
 
-  // corsie
-  for(const y of o.hLanes){
-    parts.push(`<rect x="48" y="${y-laneHalf}" width="${o.w-96}" height="${laneHalf*2}" rx="8" fill="${t.lane}"/>`);
-    parts.push(`<line x1="70" y1="${y}" x2="${o.w-70}" y2="${y}" stroke="${t.laneDash}" stroke-width="2" stroke-dasharray="16 14"/>`);
+  /* ===================== TERMINAL (partenza: consegna chiavi) ===================== */
+  const T = o.terminal;
+  parts.push(`<rect x="${T.x}" y="${T.y}" width="${T.w}" height="${T.h}" rx="22" fill="${t.floor}" stroke="${t.wall}" stroke-width="7"/>`);
+  parts.push(`<text x="${T.x+26}" y="${T.y+40}" font-size="21" font-weight="800" fill="${t.zone}" font-family="inherit">${esc(T.name)}</text>`);
+  if(T.sub) parts.push(`<text x="${T.x+26}" y="${T.y+63}" font-size="12.5" font-weight="600" fill="${t.zone}">${esc(T.sub)}</text>`);
+
+  // corridoi camminabili del terminal (spine + traverse)
+  for(const y of T.hCorr)
+    parts.push(`<rect x="${T.x+30}" y="${y-laneHalf}" width="${T.w-60}" height="${laneHalf*2}" rx="11" fill="${t.lane}"/>`);
+  for(const x of T.vCorr)
+    parts.push(`<rect x="${x-laneHalf}" y="${T.hCorr[0]-laneHalf}" width="${laneHalf*2}" height="${T.hCorr[T.hCorr.length-1]-T.hCorr[0]+laneHalf*2}" rx="11" fill="${t.lane}"/>`);
+
+  // gate / sedute (decorazione da aeroporto)
+  for(const g of (T.gates||[])){
+    parts.push(`<g><rect x="${g.x-42}" y="${g.y-26}" width="84" height="52" rx="9" fill="#e2e8f0" stroke="${t.line}" stroke-width="1.4"/>`);
+    for(let r=0;r<2;r++) for(let c=0;c<4;c++)
+      parts.push(`<circle cx="${g.x-30+c*18}" cy="${g.y-11+r*20}" r="4.4" fill="#9aa8b8"/>`);
+    parts.push(`<text x="${g.x}" y="${g.y+43}" text-anchor="middle" font-size="12" font-weight="800" fill="${t.zone}">${esc(g.label)}</text></g>`);
   }
-  for(const x of o.vLanes){
+
+  // banchi autonoleggi vicino al punto di consegna chiavi
+  const d = T.desk;
+  for(let i=0;i<(d.counters||5);i++)
+    parts.push(`<rect x="${d.x-72+i*30}" y="${d.y-52}" width="24" height="15" rx="3" fill="#0ea5e9" opacity="${(0.45+0.12*(i%3)).toFixed(2)}"/>`);
+  parts.push(`<rect x="${d.x-78}" y="${d.y-33}" width="158" height="10" rx="5" fill="#64748b"/>`);
+
+  /* ===================== CONNETTORE (attraversamento) ===================== */
+  const C = o.connector;
+  parts.push(`<rect x="${C.from.x}" y="${C.from.y-laneHalf-7}" width="${C.to.x-C.from.x}" height="${(laneHalf+7)*2}" rx="12" fill="${t.lane}" stroke="${t.wall}" stroke-width="4"/>`);
+  for(let x=C.from.x+18; x<C.to.x-10; x+=26)
+    parts.push(`<line x1="${x}" y1="${C.from.y-laneHalf-7}" x2="${x}" y2="${C.from.y+laneHalf+7}" stroke="${t.wall}" stroke-width="1.3" opacity=".45"/>`);
+  parts.push(`<text x="${(C.from.x+C.to.x)/2}" y="${C.from.y-laneHalf-18}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${t.zone}">${esc(C.label||'Passaggio coperto')}</text>`);
+
+  /* ===================== PARCHEGGIO (arrivo: l'auto) ===================== */
+  const P = o.park;
+  const firstY = P.hLanes[0], lastY = P.hLanes[P.hLanes.length-1];
+  parts.push(`<rect x="${P.x}" y="${P.y}" width="${P.w}" height="${P.h}" rx="20" fill="${t.pfloor||t.floor}" stroke="${t.wall}" stroke-width="7"/>`);
+  for(const y of P.hLanes){
+    parts.push(`<rect x="${P.x+22}" y="${y-laneHalf}" width="${P.w-44}" height="${laneHalf*2}" rx="8" fill="${t.lane}"/>`);
+    parts.push(`<line x1="${P.x+40}" y1="${y}" x2="${P.x+P.w-40}" y2="${y}" stroke="${t.laneDash}" stroke-width="2" stroke-dasharray="16 14"/>`);
+  }
+  for(const x of P.vLanes)
     parts.push(`<rect x="${x-laneHalf}" y="${firstY-laneHalf}" width="${laneHalf*2}" height="${lastY-firstY+laneHalf*2}" fill="${t.lane}"/>`);
-  }
-
-  // stalli + auto parcheggiate + etichette di zona
-  for(let i = 0; i < o.hLanes.length-1; i++){
-    const y1 = o.hLanes[i] + laneHalf + 4, y2 = o.hLanes[i+1] - laneHalf - 4;
-    const mid = (y1 + y2) / 2;
-    for(let j = 0; j < o.vLanes.length-1; j++){
-      const sx = o.vLanes[j] + laneHalf + 12, ex = o.vLanes[j+1] - laneHalf - 12;
+  for(let i = 0; i < P.hLanes.length-1; i++){
+    const y1 = P.hLanes[i] + laneHalf + 4, y2 = P.hLanes[i+1] - laneHalf - 4, mid = (y1 + y2) / 2;
+    for(let j = 0; j < P.vLanes.length-1; j++){
+      const sx = P.vLanes[j] + laneHalf + 12, ex = P.vLanes[j+1] - laneHalf - 12;
       const n = Math.floor((ex - sx) / stallW);
       for(let k = 0; k < n; k++){
         const x = sx + k*stallW;
         for(const [ry, rh] of [[y1, mid-y1],[mid, y2-mid]]){
           parts.push(`<rect x="${x}" y="${ry}" width="${stallW}" height="${rh}" fill="none" stroke="${t.line}" stroke-width="1.6"/>`);
-          if(R() < 0.55){
+          if(R() < 0.5){
             const c = carCols[Math.floor(R()*carCols.length)];
             const cw = stallW-11, ch = rh-16, cx = x+5.5, cy = ry+8;
             parts.push(`<g><rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="7" fill="${c}"/>`+
-              `<rect x="${cx+3}" y="${cy+ch*0.18}" width="${cw-6}" height="${ch*0.2}" rx="3" fill="rgba(255,255,255,.45)"/>`+
-              `<rect x="${cx+3}" y="${cy+ch*0.62}" width="${cw-6}" height="${ch*0.16}" rx="3" fill="rgba(255,255,255,.3)"/></g>`);
+              `<rect x="${cx+3}" y="${cy+ch*0.18}" width="${cw-6}" height="${ch*0.2}" rx="3" fill="rgba(255,255,255,.45)"/></g>`);
           }
         }
       }
-      const zl = (o.zones[i]||[])[j];
-      if(zl) parts.push(`<text x="${(sx+ex)/2}" y="${mid+13}" text-anchor="middle" font-size="42" font-weight="800" fill="${t.zone}" font-family="inherit" style="letter-spacing:.05em">${zl}</text>`);
+      const zl = (P.zones[i]||[])[j];
+      if(zl) parts.push(`<text x="${(sx+ex)/2}" y="${mid+13}" text-anchor="middle" font-size="40" font-weight="800" fill="${t.zone}" font-family="inherit" style="letter-spacing:.05em">${esc(zl)}</text>`);
     }
   }
-
-  // punto di ingresso pedonale / consegna chiavi
-  const e = o.entry;
-  parts.push(`<rect x="${e.x-laneHalf}" y="${lastY}" width="${laneHalf*2}" height="${e.y-lastY}" fill="${t.lane}"/>`);
-  parts.push(`<g><rect x="${e.x-72}" y="${e.y-4}" width="144" height="52" rx="12" fill="#059669"/>`+
-    `<text x="${e.x}" y="${e.y+18}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">🚶 ${esc(e.label)}</text>`+
-    `<text x="${e.x}" y="${e.y+36}" text-anchor="middle" font-size="11" font-weight="600" fill="#a7f3d0">${esc(e.sub||'')}</text></g>`);
-
-  // POI decorativi (ascensori, casse…)
-  for(const p of (o.pois||[])){
+  for(const p of (P.pois||[]))
     parts.push(`<g><rect x="${p.x-24}" y="${p.y-18}" width="48" height="36" rx="9" fill="#334155"/>`+
       `<text x="${p.x}" y="${p.y+6}" text-anchor="middle" font-size="16">${p.icon}</text>`+
       (p.label?`<text x="${p.x}" y="${p.y+34}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">${esc(p.label)}</text>`:'')+`</g>`);
-  }
-  parts.push(`<text x="${o.w-46}" y="${o.h-40}" text-anchor="end" font-size="13" font-weight="700" fill="${t.zone}">${esc(o.floorTag)}</text>`);
+  parts.push(`<text x="${P.x+P.w-30}" y="${P.y+P.h-24}" text-anchor="end" font-size="13" font-weight="700" fill="${t.zone}">${esc(o.floorTag)}</text>`);
 
-  // ------- grafo corridoi -------
-  const cols = [];
-  for(let j = 0; j < o.vLanes.length-1; j++){
-    const a = o.vLanes[j], b = o.vLanes[j+1], n = Math.max(1, Math.round((b-a)/85));
-    for(let k = 0; k < n; k++) cols.push(a + (b-a)*k/n);
-  }
-  cols.push(o.vLanes[o.vLanes.length-1]);
-  const idx = {};
-  for(const y of o.hLanes){
+  /* ===================== GRAFO CAMMINAMENTI (unico, terminal→parcheggio) ===================== */
+  // -- griglia terminal --
+  const tidx = {};
+  for(const y of T.hCorr){
     let prev = null;
-    for(const x of cols){
-      const id = addNode(x, y);
-      idx[x+','+y] = id;
-      if(prev != null) edges.push([prev, id]);
-      prev = id;
+    for(const x of T.vCorr){
+      const id = addNode(x, y); tidx[K(x,y)] = id;
+      if(prev != null) edges.push([prev, id]); prev = id;
     }
   }
-  for(const x of o.vLanes)
-    for(let i = 0; i < o.hLanes.length-1; i++)
-      edges.push([idx[x+','+o.hLanes[i]], idx[x+','+o.hLanes[i+1]]]);
-  const eN = addNode(e.x, e.y + 20);
-  edges.push([eN, idx[e.x+','+lastY]]);
+  for(const x of T.vCorr)
+    for(let i = 0; i < T.hCorr.length-1; i++)
+      edges.push([tidx[K(x, T.hCorr[i])], tidx[K(x, T.hCorr[i+1])]]);
 
-  const adj = nodes.map(() => []);
-  for(const [a2,b2] of edges){
-    const d = dist(nodes[a2], nodes[b2]);
-    adj[a2].push([b2,d]); adj[b2].push([a2,d]);
+  // -- connettore: ultima traversa del terminal → ingresso parcheggio --
+  const rightTermX = T.vCorr[T.vCorr.length-1];
+  const cStart = addNode(C.from.x, C.from.y);
+  const cEnd   = addNode(C.to.x, C.to.y);
+  edges.push([tidx[K(rightTermX, C.from.y)], cStart]);
+  edges.push([cStart, cEnd]);
+
+  // -- griglia parcheggio --
+  const cols = [];
+  for(let j = 0; j < P.vLanes.length-1; j++){
+    const a = P.vLanes[j], b = P.vLanes[j+1], n = Math.max(1, Math.round((b-a)/85));
+    for(let k = 0; k < n; k++) cols.push(a + (b-a)*k/n);
   }
+  cols.push(P.vLanes[P.vLanes.length-1]);
+  const pidx = {};
+  for(const y of P.hLanes){
+    let prev = null;
+    for(const x of cols){
+      const id = addNode(x, y); pidx[K(x,y)] = id;
+      if(prev != null) edges.push([prev, id]); prev = id;
+    }
+  }
+  for(const x of P.vLanes)
+    for(let i = 0; i < P.hLanes.length-1; i++)
+      edges.push([pidx[K(x, P.hLanes[i])], pidx[K(x, P.hLanes[i+1])]]);
+
+  // ingresso pedonale parcheggio: connettore → prima corsia verticale
+  const entX = P.vLanes[0];
+  let ya = P.hLanes[0], yb = P.hLanes[P.hLanes.length-1];
+  for(let i = 0; i < P.hLanes.length-1; i++)
+    if(C.to.y >= P.hLanes[i] && C.to.y <= P.hLanes[i+1]){ ya = P.hLanes[i]; yb = P.hLanes[i+1]; break; }
+  const entId = addNode(entX, C.to.y);
+  edges.push([cEnd, entId]);
+  edges.push([entId, pidx[K(entX, ya)]]);
+  edges.push([entId, pidx[K(entX, yb)]]);
+
+  // -- adiacenze --
+  const adj = nodes.map(() => []);
+  for(const [a,b] of edges){
+    const dd = dist(nodes[a], nodes[b]);
+    adj[a].push([b,dd]); adj[b].push([a,dd]);
+  }
+
+  // marker "consegna chiavi" (disegnato per ultimo, sopra a tutto)
+  parts.push(`<g><rect x="${d.x-98}" y="${d.y-6}" width="196" height="54" rx="12" fill="#059669"/>`+
+    `<text x="${d.x}" y="${d.y+17}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">🔑 ${esc(d.label)}</text>`+
+    `<text x="${d.x}" y="${d.y+36}" text-anchor="middle" font-size="11" font-weight="600" fill="#a7f3d0">${esc(d.sub||'')}</text></g>`);
+
   return { id:o.id, name:o.name, w:o.w, h:o.h, mPerPx:o.mPerPx,
-           svg:parts.join(''), nodes, edges, adj, entry:{x:e.x, y:e.y+20} };
+           svg:parts.join(''), nodes, edges, adj, entry:{x:d.x, y:d.y} };
 }
 
 const MAPS = {
-  fco: makeGarage({
+  fco: makeAirport({
     id:'fco', seed:7,
-    name:'Roma Fiumicino T3 · Parcheggio Multipiano E — Piano 2',
+    name:'Roma Fiumicino (FCO) · Terminal 3 → Parcheggio Multipiano E',
     floorTag:'FCO · MULTIPIANO E · PIANO 2',
-    w:1060, h:700, mPerPx:0.14,
-    hLanes:[110, 260, 410, 560], vLanes:[100, 530, 960],
-    zones:[['A1','A2'],['B1','B2'],['C1','C2']],
-    entry:{x:100, y:640, label:'Consegna chiavi', sub:'Ascensori dal Terminal 3'},
-    pois:[{x:960, y:620, icon:'🛗', label:'Ascensori'},{x:530, y:620, icon:'💳', label:'Casse'}],
-    theme:{bg:'#cbd5e1', floor:'#eef2f7', wall:'#94a3b8', lane:'#dde5ee', laneDash:'#b6c2d2', line:'#c3ced9', zone:'#b0bdcc'}
+    w:1720, h:1000, mPerPx:0.30,
+    terminal:{
+      x:40, y:70, w:560, h:860,
+      name:'Terminal 3 · Arrivi', sub:'Area autonoleggi',
+      hCorr:[190, 490, 820], vCorr:[190, 470],
+      desk:{x:210, y:775, label:'Consegna chiavi', sub:'Banchi Autonoleggi · T3', counters:5},
+      gates:[{x:330,y:255,label:'Arrivi A'},{x:470,y:255,label:'Arrivi B'},{x:330,y:660,label:'Noleggi'}]
+    },
+    connector:{ from:{x:600, y:490}, to:{x:760, y:490}, label:'Passaggio pedonale coperto' },
+    park:{
+      x:760, y:110, w:920, h:800,
+      hLanes:[200, 400, 600, 800], vLanes:[840, 1180, 1540],
+      zones:[['E1','E2'],['E3','E4'],['E5','E6']],
+      pois:[{x:1540, y:150, icon:'🛗', label:'Ascensori'},{x:1180, y:862, icon:'💳', label:'Casse'}]
+    },
+    theme:{bg:'#c3d0de', floor:'#eef2f7', pfloor:'#e6ebf1', wall:'#93a3b6', lane:'#dbe3ec', laneDash:'#b6c2d2', line:'#c3ced9', zone:'#8fa0b3'}
   }),
-  cia: makeGarage({
+  cia: makeAirport({
     id:'cia', seed:11,
-    name:'Roma Ciampino · Parcheggio P1 — Piano terra (scoperto)',
+    name:'Roma Ciampino (CIA) · Terminal → Parcheggio P1',
     floorTag:'CIA · P1 · PIANO TERRA',
-    w:900, h:600, mPerPx:0.16,
-    hLanes:[100, 240, 380], vLanes:[90, 810],
-    zones:[['P1 · A'],['P1 · B']],
-    entry:{x:90, y:530, label:'Consegna chiavi', sub:'Uscita Arrivi'},
-    pois:[{x:810, y:520, icon:'🅿️', label:'Casse P1'}],
-    theme:{bg:'#bbd3b6', floor:'#e9edf2', wall:'#8aa88f', lane:'#dbe2ea', laneDash:'#b3bfcd', line:'#c0ccd8', zone:'#adbccb'}
+    w:1380, h:840, mPerPx:0.32,
+    terminal:{
+      x:40, y:70, w:440, h:700,
+      name:'Terminal · Arrivi', sub:'Area autonoleggi',
+      hCorr:[170, 430, 640], vCorr:[160, 380],
+      desk:{x:185, y:600, label:'Consegna chiavi', sub:'Banchi Autonoleggi', counters:4},
+      gates:[{x:300,y:250,label:'Arrivi'},{x:300,y:545,label:'Noleggi'}]
+    },
+    connector:{ from:{x:480, y:430}, to:{x:620, y:430}, label:'Uscita Arrivi → Parcheggio' },
+    park:{
+      x:620, y:110, w:720, h:620,
+      hLanes:[190, 370, 560], vLanes:[700, 1240],
+      zones:[['P1 · A'],['P1 · B']],
+      pois:[{x:1240, y:150, icon:'🅿️', label:'Casse P1'}]
+    },
+    theme:{bg:'#bcd0bb', floor:'#eef2ef', pfloor:'#e7ede7', wall:'#8aa88f', lane:'#dde6dd', laneDash:'#b3c4b3', line:'#c2d0c2', zone:'#8aa08f'}
   })
 };
 
@@ -408,7 +483,7 @@ const I18N = {
     left: 'a ${d} m da te', remaining: m => `${m} m all’auto`,
     arrivedT: 'Eccola! 🎉', arrivedP: st => `Sei arrivato${st ? ' allo stallo ' + st : ''}. Premi il pulsante e l’auto lampeggerà per farsi riconoscere.`,
     flashSent: 'Comando inviato al dispositivo di bordo 💡🔊', close: 'Chiudi',
-    youAreHere: 'Tu sei qui', poweredBy: 'Demo · dispositivo telematico To Hire'
+    youAreHere: 'Tu sei qui', poweredBy: 'Demo · dispositivo telematico 2hire'
   },
   en: {
     yourCar: m => `Your ${m} is waiting`, hi: 'Hi there! 👋',
@@ -422,7 +497,7 @@ const I18N = {
     remaining: m => `${m} m to your car`,
     arrivedT: 'There it is! 🎉', arrivedP: st => `You’ve arrived${st ? ' at bay ' + st : ''}. Tap the button and the car will flash its lights so you can spot it.`,
     flashSent: 'Command sent to the on-board device 💡🔊', close: 'Close',
-    youAreHere: 'You are here', poweredBy: 'Demo · To Hire telematics device'
+    youAreHere: 'You are here', poweredBy: 'Demo · 2hire telematics device'
   }
 };
 
@@ -576,7 +651,7 @@ let AD = null;
 function adLoad(){
   try{ AD = JSON.parse(localStorage.getItem(AD_KEY) || 'null'); }catch(e){ AD = null; }
   if(!AD) AD = { mapId:'fco', mode:null, u:null, c:null, w:[], mw:150,
-                 car:{ tg:'GA 129 KX', md:'Fiat 500 Hybrid', cl:'Bianco Gelato', st:'B2-14' } };
+                 car:{ tg:'GA 129 KX', md:'Fiat 500 Hybrid', cl:'Bianco Gelato', st:'E6-14' } };
 }
 function adSave(){ localStorage.setItem(AD_KEY, JSON.stringify(AD)); }
 
@@ -596,16 +671,16 @@ function renderAdmin(){
     <aside class="sidebar">
       <div class="topbar">
         <a href="#/" style="text-decoration:none;color:inherit"><div class="brand">
-          <div class="logo">TH</div>
-          <div>To Hire <small>CarFinder · Admin</small></div>
+          <div class="logo">2h</div>
+          <div>2hire <small>CarFinder · Admin</small></div>
         </div></a>
       </div>
 
       <h2>1 · Planimetria</h2>
       <div class="field">
         <select id="mapSel">
-          <option value="fco">✈️ Fiumicino T3 — Multipiano E, Piano 2</option>
-          <option value="cia">✈️ Ciampino — P1, Piano terra</option>
+          <option value="fco">✈️ Fiumicino — Terminal 3 + Multipiano E</option>
+          <option value="cia">✈️ Ciampino — Terminal + Parcheggio P1</option>
           <option value="custom">🖼 Planimetria personalizzata (upload)</option>
         </select>
       </div>
@@ -643,7 +718,7 @@ function renderAdmin(){
         <button class="primaryBtn" id="copyBtn" disabled>📋 Copia link</button>
         <button class="secondaryBtn" id="openBtn" disabled>▶ Apri demo</button>
       </div>
-      <p class="hint">Nel prodotto reale questo link parte via <b>SMS / e-mail / QR</b> al momento della consegna chiavi, e la posizione dell'auto arriva in automatico dal dispositivo To Hire a bordo.</p>
+      <p class="hint">Nel prodotto reale questo link parte via <b>SMS / e-mail / QR</b> al momento della consegna chiavi, e la posizione dell'auto arriva in automatico dal dispositivo 2hire a bordo.</p>
     </aside>
 
     <div class="mapArea">
@@ -790,7 +865,7 @@ function renderFind(data){
   app.innerHTML = `
   <div class="find">
     <div class="findHead">
-      <div class="brand"><div class="logo">TH</div><div style="font-size:15px">To Hire <small>CarFinder</small></div></div>
+      <div class="brand"><div class="logo">2h</div><div style="font-size:15px">2hire <small>CarFinder</small></div></div>
       <div class="langTgl">
         <button data-l="it" class="${FIND_LANG === 'it' ? 'on' : ''}">IT</button>
         <button data-l="en" class="${FIND_LANG === 'en' ? 'on' : ''}">EN</button>
@@ -967,17 +1042,17 @@ function renderFind(data){
 /* ================= LANDING ============================================ */
 
 function sampleLink(){
-  const data = { v:1, m:'fco', u:{x:100, y:655}, c:{x:717, y:330},
-                 car:{ tg:'GA 129 KX', md:'Fiat 500 Hybrid', cl:'Bianco Gelato', st:'B2-14' } };
+  const data = { v:1, m:'fco', u:{x:200, y:790}, c:{x:1350, y:690},
+                 car:{ tg:'GA 129 KX', md:'Fiat 500 Hybrid', cl:'Bianco Gelato', st:'E6-14' } };
   return '#/find?d=' + enc(data);
 }
 function renderLanding(){
   $('#app').innerHTML = `
   <div class="landing">
-    <div class="brand"><div class="logo">TH</div><div>To Hire <small>Telematics</small></div></div>
+    <div class="brand"><div class="logo">2h</div><div>2hire <small>Telematics</small></div></div>
     <div class="hero">
       <h1>CarFinder<br><em>«La tua auto ti aspetta. Ti ci portiamo noi.»</em></h1>
-      <p class="lead">Demo del servizio di wayfinding per autonoleggi: al momento della consegna chiavi il cliente riceve un link. Il link lo guida sulla planimetria del parcheggio fino allo stallo esatto — e negli ultimi metri è <b>l'auto stessa a farsi trovare</b>, lampeggiando e suonando su comando, grazie al dispositivo To Hire già a bordo.</p>
+      <p class="lead">Demo del servizio di wayfinding per autonoleggi: al momento della consegna chiavi il cliente riceve un link. Il link lo guida sulla planimetria del parcheggio fino allo stallo esatto — e negli ultimi metri è <b>l'auto stessa a farsi trovare</b>, lampeggiando e suonando su comando, grazie al dispositivo 2hire già a bordo.</p>
     </div>
     <div class="cards">
       <a class="cardBtn" href="#/admin">
@@ -991,7 +1066,7 @@ function renderLanding(){
         <p>Apri subito l'esperienza che vede il cliente, con dati d'esempio già pronti: percorso guidato, indicazioni passo-passo e «trova l'auto».</p>
       </a>
     </div>
-    <p class="note"><b>Nota sulla demo.</b> Le planimetrie integrate sono stilizzate a scopo dimostrativo (le planimetrie ufficiali ADR si possono caricare dall'admin come immagine). La posizione del cliente è simulata: nel prodotto reale arriverebbe dal GPS del telefono all'aperto e da beacon/BLE al chiuso, mentre la posizione dell'auto arriva dal dispositivo telematico To Hire. Il comando «lampeggia e suona» qui è simulato: nel prodotto reale viaggia dal cloud To Hire al dispositivo a bordo.</p>
+    <p class="note"><b>Nota sulla demo.</b> Le planimetrie integrate sono stilizzate a scopo dimostrativo (le planimetrie ufficiali ADR si possono caricare dall'admin come immagine). La posizione del cliente è simulata: nel prodotto reale arriverebbe dal GPS del telefono all'aperto e da beacon/BLE al chiuso, mentre la posizione dell'auto arriva dal dispositivo telematico 2hire. Il comando «lampeggia e suona» qui è simulato: nel prodotto reale viaggia dal cloud 2hire al dispositivo a bordo.</p>
   </div>`;
 }
 
