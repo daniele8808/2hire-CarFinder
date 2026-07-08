@@ -982,15 +982,32 @@ function renderFind(data){
   // mappa
   const svg = $('#findSvg');
   svg.innerHTML = map.svg + routeSVG(pts) + carPinSVG(data.c.x, data.c.y, car.st ? (FIND_LANG === 'it' ? 'Stallo ' : 'Bay ') + car.st : '') + userDotSVG(data.u.x, data.u.y, L.youAreHere);
-  // inquadratura iniziale sul percorso (con margine), mantenendo l'aspect della mappa
-  const all = pts.concat([data.c, data.u]);
-  const bx1 = Math.min(...all.map(p => p.x)) - 90, bx2 = Math.max(...all.map(p => p.x)) + 90;
-  const by1 = Math.min(...all.map(p => p.y)) - 120, by2 = Math.max(...all.map(p => p.y)) + 90;
+  // inquadratura iniziale, mantenendo l'aspect ratio della mappa
   const ratio = (svg.clientWidth && svg.clientHeight) ? svg.clientWidth / svg.clientHeight : map.w / map.h;
-  let iw = bx2 - bx1, ih = by2 - by1;
-  if(iw / ih < ratio) iw = ih * ratio; else ih = iw / ratio;
-  const icx = (bx1 + bx2) / 2, icy = (by1 + by2) / 2;
-  const pz = panZoom(svg, [0, 0, map.w, map.h], { initial: [icx - iw/2, icy - ih/2, iw, ih] });
+  const portrait = svg.clientHeight > svg.clientWidth * 1.05;
+  let iw, ih, icx, icy;
+  if(portrait){
+    // Su schermi verticali inquadrare TUTTO il percorso terminal->parcheggio lo
+    // comprime in pochi cm e le etichette/pin si accavallano. Meglio partire
+    // zoomati sulla partenza ("You are here"): la camera segue poi il cammino.
+    iw = Math.min(map.w, map.w * 0.6);
+    ih = iw / ratio;
+    const look = pts[Math.min(3, pts.length - 1)] || data.c;   // guarda un po' avanti lungo il percorso
+    icx = data.u.x * 0.6 + look.x * 0.4;
+    icy = data.u.y * 0.6 + look.y * 0.4;
+  } else {
+    // Desktop / landscape: vista d'insieme dell'intero percorso, con margine.
+    const all = pts.concat([data.c, data.u]);
+    const bx1 = Math.min(...all.map(p => p.x)) - 90, bx2 = Math.max(...all.map(p => p.x)) + 90;
+    const by1 = Math.min(...all.map(p => p.y)) - 120, by2 = Math.max(...all.map(p => p.y)) + 90;
+    iw = bx2 - bx1; ih = by2 - by1;
+    if(iw / ih < ratio) iw = ih * ratio; else ih = iw / ratio;
+    icx = (bx1 + bx2) / 2; icy = (by1 + by2) / 2;
+  }
+  // mantieni la finestra dentro i bordi della mappa quando possibile
+  if(iw <= map.w) icx = Math.max(iw / 2, Math.min(map.w - iw / 2, icx));
+  if(ih <= map.h) icy = Math.max(ih / 2, Math.min(map.h - ih / 2, icy));
+  const pz = panZoom(svg, [0, 0, map.w, map.h], { initial: [icx - iw / 2, icy - ih / 2, iw, ih] });
 
   // distanze cumulative per la simulazione
   const cum = [0];
