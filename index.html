@@ -566,6 +566,20 @@ function panZoom(svg, vb0, opts){
   let vb = (opts.initial || vb0).slice();
   const apply = () => svg.setAttribute('viewBox', vb.join(' '));
   apply();
+  // Converte coordinate schermo -> coordinate mappa (utente SVG) usando la CTM
+  // nativa: gestisce viewBox e letterboxing di preserveAspectRatio, così il pin
+  // finisce esattamente sotto il click anche quando il contenitore non ha lo
+  // stesso rapporto d'aspetto del viewBox.
+  const toMap = (cx, cy) => {
+    const ctm = svg.getScreenCTM();
+    if(ctm){
+      const inv = ctm.inverse();
+      return { x: inv.a*cx + inv.c*cy + inv.e, y: inv.b*cx + inv.d*cy + inv.f };
+    }
+    const r = svg.getBoundingClientRect();
+    const f = vb[2] / r.width;
+    return { x: vb[0] + (cx - r.left)*f, y: vb[1] + (cy - r.top)*f };
+  };
   const ptrs = new Map();
   let startVB = null, startPts = null, movedPx = 0, lastTouch = 0;
   const scaleF = () => vb[2] / svg.clientWidth;
@@ -608,9 +622,7 @@ function panZoom(svg, vb0, opts){
   const up = e => {
     ptrs.delete(e.pointerId);
     if(ptrs.size === 0 && movedPx < 6 && opts.onTap){
-      const r = svg.getBoundingClientRect();
-      const f = vb[2] / r.width;
-      opts.onTap({ x: vb[0] + (e.clientX - r.left)*f, y: vb[1] + (e.clientY - r.top)*f });
+      opts.onTap(toMap(e.clientX, e.clientY));
     }
     startPts = null;
   };
@@ -619,9 +631,8 @@ function panZoom(svg, vb0, opts){
   svg.addEventListener('wheel', e => {
     e.preventDefault();
     lastTouch = performance.now();
-    const r = svg.getBoundingClientRect();
-    const f = vb[2]/r.width;
-    const wx = vb[0] + (e.clientX-r.left)*f, wy = vb[1] + (e.clientY-r.top)*f;
+    const w0 = toMap(e.clientX, e.clientY);
+    const wx = w0.x, wy = w0.y;
     const k = Math.pow(1.0016, e.deltaY);
     const old = vb[2]; vb[2] *= k; clamp();
     const f2 = vb[2]/old;
