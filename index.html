@@ -89,7 +89,13 @@
   .langTgl{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;font-size:12px;font-weight:700}
   .langTgl button{padding:6px 12px;color:var(--ink3)}
   .langTgl button.on{background:var(--ink);color:#fff}
-  .carCard{background:var(--card);margin:12px 14px 0;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);z-index:9;position:relative}
+  .carCard{background:var(--card);margin:12px 14px 0;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);z-index:9;position:relative;cursor:pointer;user-select:none}
+  .carCard .cardTgl{position:absolute;top:12px;right:14px;color:var(--ink3);font-size:13px;font-weight:800;transition:transform .2s}
+  .carCard.collapsed .cardTgl{transform:rotate(180deg)}
+  /* scheda compressa: solo il modello su una riga, più spazio alla mappa */
+  .carCard.collapsed{padding:10px 16px}
+  .carCard.collapsed .hi,.carCard.collapsed .carMeta{display:none}
+  .carCard.collapsed .model{font-size:15px;margin-top:0;padding-right:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carCard .hi{font-size:12.5px;color:var(--ink2);font-weight:600}
   .carCard .model{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
   .carMeta{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
@@ -105,7 +111,16 @@
   .mapWrap svg{width:100%;height:100%}
   .sheet{background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.18);
     padding:14px 18px calc(16px + env(safe-area-inset-bottom));z-index:10;position:relative}
-  .sheet .grab{width:44px;height:5px;border-radius:99px;background:var(--line);margin:0 auto 12px}
+  .sheet .grab{display:block;width:44px;height:5px;border-radius:99px;background:var(--line);
+    margin:0 auto 12px;padding:0;border:none;cursor:pointer;box-sizing:content-box;
+    /* area di tocco ampia attorno alla barretta, senza ingrandirla visivamente */
+    background-clip:content-box;border-top:11px solid transparent;border-bottom:11px solid transparent;
+    margin-top:-11px;margin-bottom:1px;transition:background-color .15s}
+  .sheet .grab:hover{background-color:var(--ink3)}
+  /* pannello compresso: mostra solo barretta + indicazione corrente, più mappa */
+  .sheet.collapsed .progress,.sheet.collapsed .actions,.sheet.collapsed .toggleSteps,
+  .sheet.collapsed .stepList,.sheet.collapsed .poweredBy{display:none}
+  .sheet.collapsed .stepNow{margin-bottom:2px}
   .stepNow{display:flex;align-items:center;gap:14px}
   .stepNow .ic{width:48px;height:48px;border-radius:14px;background:#eff6ff;color:#1d4ed8;display:grid;place-items:center;
     font-size:24px;font-weight:800;flex-shrink:0}
@@ -507,7 +522,7 @@ const I18N = {
     yourCar: m => `La tua ${m} ti aspetta`, hi: 'Ciao! 👋',
     stall: 'Stallo', walk: (d,t) => `${d} m · ${t} min a piedi`,
     start: 'Avvia percorso', navOn: 'In cammino…', restart: 'Ripeti percorso',
-    flash: 'Trova l’auto', steps: 'Mostra tutte le indicazioni', hideSteps: 'Nascondi indicazioni',
+    flash: 'Trova l’auto', steps: 'Mostra tutte le indicazioni', hideSteps: 'Nascondi indicazioni', toggleSheet: 'Comprimi o espandi il pannello',
     startStep: 'Parti dal punto di consegna chiavi',
     goThen: (m,t) => `Prosegui per ${m} m, poi gira a ${t === 'L' ? 'sinistra' : 'destra'}`,
     uturn: m => `Prosegui per ${m} m, poi torna indietro`,
@@ -521,7 +536,7 @@ const I18N = {
     yourCar: m => `Your ${m} is waiting`, hi: 'Hi there! 👋',
     stall: 'Bay', walk: (d,t) => `${d} m · ${t} min walk`,
     start: 'Start walking route', navOn: 'Walking…', restart: 'Replay route',
-    flash: 'Find my car', steps: 'Show all directions', hideSteps: 'Hide directions',
+    flash: 'Find my car', steps: 'Show all directions', hideSteps: 'Hide directions', toggleSheet: 'Collapse or expand panel',
     startStep: 'Start from the key pick-up desk',
     goThen: (m,t) => `Walk ${m} m, then turn ${t === 'L' ? 'left' : 'right'}`,
     uturn: m => `Walk ${m} m, then turn back`,
@@ -927,7 +942,8 @@ function renderFind(data){
       </div>
     </div>
 
-    <div class="carCard">
+    <div class="carCard" id="carCard" role="button" aria-label="${L.toggleSheet}">
+      <span class="cardTgl">▴</span>
       <div class="hi">${L.hi}</div>
       <div class="model">${esc(L.yourCar(car.md || 'auto'))}</div>
       <div class="carMeta">
@@ -951,8 +967,8 @@ function renderFind(data){
       </div>
     </div>
 
-    <div class="sheet">
-      <div class="grab"></div>
+    <div class="sheet" id="sheet">
+      <button class="grab" id="grab" aria-label="${L.toggleSheet||'Comprimi/espandi pannello'}"></button>
       <div class="stepNow">
         <div class="ic" id="stepIc">${steps[0].icon}</div>
         <div>
@@ -969,7 +985,7 @@ function renderFind(data){
       <div class="stepList" id="stepList">
         ${steps.map((s,i) => `<div class="it" data-i="${i}"><span class="n">${s.icon}</span><span>${esc(s.text)}</span></div>`).join('')}
       </div>
-      <div style="text-align:center;font-size:10.5px;color:var(--ink3);margin-top:10px;font-weight:600">${L.poweredBy}</div>
+      <div class="poweredBy" style="text-align:center;font-size:10.5px;color:var(--ink3);margin-top:10px;font-weight:600">${L.poweredBy}</div>
     </div>
     <div class="toast" id="toast"></div>
   </div>`;
@@ -1101,6 +1117,16 @@ function renderFind(data){
   $('#flashBtn').addEventListener('click', flashCar);
   $('#flashBtn2').addEventListener('click', () => { $('#arrive').classList.remove('show'); flashCar(); });
   $('#closeArr').addEventListener('click', () => $('#arrive').classList.remove('show'));
+
+  // comprimi/espandi la scheda auto in alto (tap ovunque sulla scheda)
+  $('#carCard').addEventListener('click', () => $('#carCard').classList.toggle('collapsed'));
+
+  // comprimi/espandi il pannello per dare più spazio alla mappa
+  $('#grab').addEventListener('click', () => {
+    const sh = $('#sheet');
+    const collapsed = sh.classList.toggle('collapsed');
+    if(collapsed) $('#stepList').classList.remove('open');  // richiudi l'elenco se aperto
+  });
 
   // elenco step
   $('#tglSteps').addEventListener('click', () => {
